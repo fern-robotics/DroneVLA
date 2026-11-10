@@ -1,0 +1,9 @@
+/target/
+/runs/
+/data/*.jsonl
+/data/*.parquet
+/models/
+*.safetensors
+*.mp4
+__pycache__/
+.venv/

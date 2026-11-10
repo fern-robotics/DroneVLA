@@ -1,0 +1,47 @@
+{
+  "source": "../uavflow_data/train-00000.parquet",
+  "episodes_in_shard": 500,
+  "episodes_converted": 494,
+  "episodes_selected": 494,
+  "frames": 15035,
+  "action_units": "metres, radians; body FRD per 0.1 s frame",
+  "q01": [
+    -0.000847,
+    -0.249338,
+    -0.127815,
+    -0.002996
+  ],
+  "q99": [
+    0.313318,
+    0.247866,
+    0.2,
+    0.018182
+  ],
+  "mean": [
+    0.169481,
+    0.004388,
+    0.004705,
+    0.000381
+  ],
+  "std": [
+    0.086309,
+    0.109166,
+    0.043026,
+    0.005132
+  ],
+  "abs_mean": [
+    0.171481,
+    0.076261,
+    0.01313,
+    0.001002
+  ],
+  "tag_counts_selected": {
+    "approach": 98,
+    "move": 196,
+    "other": 188,
+    "pass": 6,
+    "orbit": 1,
+    "yaw": 1,
+    "altitude": 4
+  }
+}
