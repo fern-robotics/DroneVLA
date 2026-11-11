@@ -5,7 +5,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq unzip libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 python3-venv >/dev/null 2>&1
 python3 -m venv /workspace/venv-airsim
-/workspace/venv-airsim/bin/pip install -q numpy pillow msgpack-rpc-python msgpack==0.6.2 backports.ssl_match_hostname
+/workspace/venv-airsim/bin/pip install -q numpy pillow setuptools wheel msgpack-rpc-python msgpack==0.6.2 backports.ssl_match_hostname
 /workspace/venv-airsim/bin/pip install -q --no-build-isolation airsim
 mkdir -p /workspace/airsim && cd /workspace/airsim
 [ -f AirSimNH.zip ] || curl -L --retry 3 -o AirSimNH.zip https://github.com/microsoft/AirSim/releases/download/v1.8.1/AirSimNH.zip
