@@ -19,6 +19,20 @@ Use a pinned commit in experiment records. Do not patch `prismatic/` model code.
 
 ## 2. Data
 
+Build the 10% subset and RLDS dataset with the repo data pipeline:
+
+```bash
+PYTHONPATH=. python scripts/build_dataset_online.py --shards all \
+  --out data/uav_flow_10pct --fraction 0.10 --formats jsonl,rlds
+cd data/uav_flow_10pct
+UAV_EXPORT_DIR=$(pwd) tfds build --data_dir $(pwd)/rlds --overwrite
+python /path/to/dronevla/integrations/openvla/patch_openvla_uav.py /path/to/openvla
+```
+
+The RLDS builder pads UAV state 4→6 and action 4→7 with zeros so the official
+OpenVLA tokenizer is unchanged. Decode only the first four action dimensions at
+inference. The data pipeline is the only place that knows about UAV keys.
+
 The official `vla-scripts/finetune.py` expects an RLDS dataset registered in:
 
 - `prismatic/vla/datasets/rlds/oxe/configs.py`
