@@ -1,7 +1,10 @@
+import os
 from pathlib import Path
 
 p = Path("/workspace/openpi/src/openpi/training/config.py")
 s = p.read_text()
+if "\nimport os\n" not in "\n" + s:
+    s = "import os\n" + s
 if "uav_policy" in s:
     print("already patched")
     raise SystemExit(0)
@@ -48,7 +51,7 @@ cfg = '''    TrainConfig(
             action_dim=4, action_horizon=8, max_token_len=180, paligemma_variant="gemma_2b_lora"
         ),
         data=LeRobotUAVDataConfig(
-            repo_id="uav_flow_sim",
+            repo_id=os.environ.get("UAV_REPO_ID", "uav_flow_sim_train"),
             base_config=DataConfig(prompt_from_task=True),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_base/params"),
