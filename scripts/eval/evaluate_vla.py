@@ -35,6 +35,12 @@ def run(args: argparse.Namespace) -> dict:
     else:
         env = MockEnv()
 
+    video = None
+    if args.video:
+        try:
+            import cv2
+        except Exception as exc:
+            raise RuntimeError("--video requires opencv-python") from exc
     rows = []
     for episode in manifest["episodes"]:
         if args.episode_id and episode["episode_id"] != args.episode_id:
@@ -54,6 +60,12 @@ def run(args: argparse.Namespace) -> dict:
         with ep_log.open("w") as log:
             for step in range(int(episode.get("max_steps", 200))):
                 obs = env.observe(capture_image=use_airsim and args.capture_image) if use_airsim else env.observe()
+                if args.video and obs.get("rgb") is not None:
+                    frame = np.asarray(obs["rgb"])
+                    if video is None:
+                        h, w = frame.shape[:2]
+                        video = cv2.VideoWriter(args.video, cv2.VideoWriter_fourcc(*"mp4v"), 10, (w, h))
+                    video.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
                 pos = np.asarray(obs["position_ned_m"], dtype=float)
                 state = [pos[0] - start[0], pos[1] - start[1], pos[2] - start[2],
                          (float(obs["yaw_rad"]) - start_yaw + np.pi) % (2 * np.pi) - np.pi]
@@ -87,6 +99,8 @@ def run(args: argparse.Namespace) -> dict:
         }
         rows.append(row)
         print(json.dumps(row), flush=True)
+    if video is not None:
+        video.release()
 
     summary = {
         "episodes": len(rows),
@@ -114,6 +128,7 @@ def main() -> None:
     ap.add_argument("--airsim-ip", default="127.0.0.1")
     ap.add_argument("--airsim-port", type=int, default=41451)
     ap.add_argument("--capture-image", action="store_true", help="capture RGB for a VLA; off for scripted mock smoke tests")
+    ap.add_argument("--video", default="", help="write an MP4 of the policy's camera frames")
     args = ap.parse_args()
     summary = run(args)
     print(json.dumps({k: v for k, v in summary.items() if k != "rows"}, indent=2))
