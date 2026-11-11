@@ -66,6 +66,25 @@ cfg = '''    TrainConfig(
             action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b_lora"
         ).get_freeze_filter(),
     ),
+    TrainConfig(
+        # Full pi0-FAST base model, useful for serving/log-prob smoke tests
+        # before a LoRA UAV checkpoint exists.
+        name="pi0_fast_uav_base",
+        model=pi0_fast.Pi0FASTConfig(
+            action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b"
+        ),
+        data=LeRobotUAVDataConfig(
+            repo_id=os.environ.get("UAV_REPO_ID", "uav_flow_sim_train"),
+            base_config=DataConfig(prompt_from_task=True),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_base/params"),
+        num_train_steps=1,
+        batch_size=1,
+        save_interval=1,
+        num_workers=0,
+        ema_decay=None,
+        wandb_enabled=False,
+    ),
 ]'''
 idx = s.rfind("\n]")
 s = s[:idx] + "\n" + cfg + s[idx + 2:]
