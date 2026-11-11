@@ -35,12 +35,30 @@ def shard_url(i: int) -> str:
     return f"https://huggingface.co/datasets/{HF_REPO}/resolve/main/train-{i:05d}-of-{N_SHARDS:05d}.parquet"
 
 
+def _valid_parquet(path: Path) -> bool:
+    if not path.exists() or path.stat().st_size < 1024:
+        return False
+    try:
+        import pyarrow.parquet as pq
+        pq.ParquetFile(path)
+        return True
+    except Exception:
+        return False
+
+
 def ensure_shard(i: int, download_dir: Path) -> Path:
     download_dir.mkdir(parents=True, exist_ok=True)
     p = download_dir / f"train-{i:05d}-of-{N_SHARDS:05d}.parquet"
-    if not p.exists() or p.stat().st_size < 1024:
-        print(f"downloading shard {i} -> {p}", flush=True)
-        urllib.request.urlretrieve(shard_url(i), p)
+    if _valid_parquet(p):
+        return p
+    p.unlink(missing_ok=True)
+    tmp = p.with_suffix(".part")
+    tmp.unlink(missing_ok=True)
+    print(f"downloading shard {i} -> {p}", flush=True)
+    urllib.request.urlretrieve(shard_url(i), tmp)
+    if not _valid_parquet(tmp):
+        raise RuntimeError(f"downloaded shard {i} is not a valid parquet file")
+    tmp.replace(p)
     return p
 
 
@@ -126,12 +144,14 @@ def export_episodes(paths: list[Path], selected_ids: set[str], out_dir: Path,
     written = set() if written is None else written
     with jsonl_path.open("a" if append else "w") as out:
         for path in paths:
-            table = pq.read_table(path, columns=["id", "frame_idx", "image", "log"])
-            rows = table.to_pylist()
+            # Stream row groups/batches: loading a full shard's images at once
+            # can exceed a small data-pod's RAM.
+            parquet = pq.ParquetFile(path)
             by_id: dict[str, list[dict]] = defaultdict(list)
-            for r in rows:
-                if r["id"] in selected_ids and r["id"] not in written:
-                    by_id[r["id"]].append(r)
+            for batch in parquet.iter_batches(batch_size=64, columns=["id", "frame_idx", "image", "log"]):
+                for r in batch.to_pylist():
+                    if r["id"] in selected_ids and r["id"] not in written:
+                        by_id[r["id"]].append(r)
             for eid, frames in by_id.items():
                 frames.sort(key=lambda r: int(r["frame_idx"]))
                 try:

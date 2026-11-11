@@ -55,6 +55,7 @@ def main() -> None:
     ap.add_argument("--image-size", type=int, default=256)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--stream", action="store_true", help="download one shard at a time and delete it (50GB disk safe)")
+    ap.add_argument("--online", action="store_true", help="select/export 10%% per shard during the single download pass")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -94,8 +95,34 @@ def main() -> None:
         print(json.dumps([m.id for m in selected[:5]]))
         return
 
+    if args.online and args.source == "hf":
+        # Single-pass: select and export ~fraction of each shard, then assign global splits.
+        selected = []
+        written: set[str] = set()
+        for i in indices:
+            p = ensure_shard(i, Path(args.download_dir))
+            shard_metas = scan_metadata([p])
+            shard_sel = select_stratified(shard_metas, args.fraction, args.seed + i)
+            export_episodes([p], {m.id for m in shard_sel}, out, {m.id: m for m in shard_sel},
+                            image_size=args.image_size, append=True, written=written, require_all=False)
+            selected.extend(shard_sel)
+            p.unlink(missing_ok=True)
+            print(json.dumps({"online_shard": i, "selected": len(shard_sel), "total": len(selected)}), flush=True)
+        splits, flags, ood_templates = assign_splits(selected, args.seed)
+        selected = [dataclasses.replace(m, split=splits[m.id], ood=flags[m.id]) for m in selected]
+        # Rewrite split/ood metadata in the already-exported JSONL.
+        records = [json.loads(line) for line in (out / "episodes.jsonl").read_text().splitlines()]
+        by_id = {m.id: m for m in selected}
+        with (out / "episodes.jsonl").open("w") as f:
+            for e in records:
+                m = by_id[e["id"]]
+                e["split"], e["ood"] = m.split, m.ood
+                f.write(json.dumps(e, separators=(",", ":")) + "\n")
+        jsonl = out / "episodes.jsonl"
     meta_map = {m.id: m for m in selected}
-    if args.stream and args.source == "hf":
+    if args.online and args.source == "hf":
+        pass
+    elif args.stream and args.source == "hf":
         written: set[str] = set()
         for i in indices:
             p = ensure_shard(i, Path(args.download_dir))
