@@ -40,6 +40,10 @@ def run(args: argparse.Namespace) -> dict:
         if args.episode_id and episode["episode_id"] != args.episode_id:
             continue
         scripted = ScriptedPolicy(episode)
+        marker_names = []
+        if use_airsim:
+            from scripts.eval.airsim_scene import ensure_markers
+            marker_names = ensure_markers(env.client, env.airsim, episode.get("markers", []))
         policy = make_policy(args.policy, scripted=scripted, host=args.host, port=args.port, url=args.policy_url)
         trajectory = []
         obs = env.reset(episode["start_pose"])
@@ -71,6 +75,9 @@ def run(args: argparse.Namespace) -> dict:
                         break
                 if trajectory and trajectory[-1].get("collision"):
                     break
+        if use_airsim:
+            from scripts.eval.airsim_scene import clear_markers
+            clear_markers(env.client, marker_names)
         evaluation = evaluate_episode(episode, trajectory, dt_s=args.dt)
         row = {
             "episode_id": episode["episode_id"], "split": episode.get("split"), "ood": episode.get("ood"),
