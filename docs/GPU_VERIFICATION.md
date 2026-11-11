@@ -88,3 +88,22 @@ Two inference bugs were found and fixed:
 
 The websocket server uses the same patched policy; the droid observation test
 exercises the log-prob path directly.
+
+
+## Trained-LoRA UAV server — verified
+
+After a 1-step UAV LoRA-SFT (`loss 13.23`, checkpoint `.../uav_1step/0`), the
+websocket server returned:
+
+```text
+keys ['actions','logprobs','policy_timing','server_timing','token_mask','tokens']
+actions     (10, 4)
+tokens      (256,)
+logprobs    (256,)
+token_mask  (256,)
+UAV_SERVER_OK
+```
+
+The client needed websocket keepalive disabled because the first JAX inference
+exceeds the default ping timeout. That workaround is already in
+`scripts/eval/vla_policy.py`.
