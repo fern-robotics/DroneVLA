@@ -1,9 +1,7 @@
-/target/
-/runs/
-/data/*.jsonl
-/data/*.parquet
-/models/
-*.safetensors
-*.mp4
+.venv*/
 __pycache__/
-.venv/
+*.pyc
+data/uavflow/
+data/uav_flow_*/
+data/*.log
+.pytest_cache/
