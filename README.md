@@ -1,67 +1,61 @@
-# DroneVLA-RS
+# DroneVL
 
-Rust implementation of the revised DroneVL thesis protocol: instruction-conditioned UAV flight intents evaluated in front of visual landmarks.
+Instruction-conditioned UAV navigation with **OpenVLA-7B** and **π₀-FAST**: LoRA-SFT on UAV-Flow-Sim, then GRPO/PPO, evaluated on AirSimNH flight intents.
 
-The protocol follows the rewritten thesis:
+## Status
 
-- intent families: primitive motion, landmark interaction (approach / pass-side / orbit / hold-at), compositional sequences;
-- conditions: M0, M1 (SFT), continued SFT, M2 (GRPO after M1);
-- SFT demonstrations from **UAV-Flow-Sim**;
-- GRPO rollouts and evaluation on the **AirSimNH** split;
-- metrics: mission success, intent-adherence score, collisions, safety interventions, path efficiency, paired bootstrap intervals.
+| Area | State |
+|---|---|
+| Data | 10% UAV-Flow-Sim subset built and validated (936 episodes, 765/90/81 splits, 81 OOD) |
+| π₀-FAST SFT | Official OpenPI path; 2-step smoke passed |
+| OpenVLA SFT | Official repo, RLDS builder and 1-step launcher ready |
+| GRPO / PPO | Tested RL core; model-specific adapters pending |
+| Evaluation | 30-episode AirSimNH suite (22 ID / 8 OOD); mock tested, live AirSim pending |
+| Rust crate | Surrogate protocol harness, not the thesis model |
 
-## What is in this repository
-
-- `src/` — deterministic kinematic simulator, software RGB/depth renderer, marker perception, safety gate, intent predicates, planner, linear policy, SFT/GRPO training, paired analysis, report/SVG generation.
-- `scripts/prepare_uavflow.py` — converts a UAV-Flow-Sim parquet shard into compact compact DroneVL JSONL using the official OpenVLA-UAV action convention (`[dx,dy,dz,dyaw]`, metres/radians).
-- `scripts/prepare_all_uavflow.py` — converts all 21 shards on a pod.
-- `scripts/airsimnh_eval_uavflow.py` — evaluates a UAV-Flow-trained checkpoint in actual AirSimNH.
-- `scripts/openvla_airsim_test.py`, `scripts/openvla_airsim_intent.py` — OpenVLA-UAV closed-loop bridge and intent mission in actual AirSimNH.
-
-## Build and test
+## Quick start
 
 ```bash
+# Data: single-pass 10% subset, RLDS-ready
+python scripts/build_dataset_online.py --shards all \
+  --out data/uav_flow_10pct --fraction 0.10 --formats jsonl
+
+# π₀-FAST SFT (official OpenPI)
+bash scripts/run_pi0_sft.sh
+
+# OpenVLA SFT (official OpenVLA; apply RLDS patch first)
+python integrations/openvla/patch_openvla_uav.py /path/to/openvla
+bash scripts/run_openvla_sft.sh
+
+# Evaluation
+python -m scripts.eval.evaluate --mock
+python -m scripts.eval.evaluate_vla --env airsim --policy websocket --port 8000
+
+# Surrogate harness
 cargo test
-cargo build --release
 ```
 
-## Convert UAV-Flow-Sim
+## Layout
 
-```bash
-python3 -m venv .venv && .venv/bin/pip install pyarrow numpy
-.venv/bin/python scripts/prepare_uavflow.py path/to/train-00000-of-00021.parquet data
-```
+- `scripts/dataset/` — selection, splits, image export, LeRobot/RLDS writers.
+- `scripts/build_dataset_online.py` — one-shard-at-a-time 10% builder.
+- `integrations/openvla/` — RLDS registration and official LoRA-SFT launcher.
+- `integrations/openpi/` — UAV policy adapter; π₀-FAST token/log-prob patch.
+- `integrations/verl/` — GRPO/PPO integration notes for OpenVLA.
+- `training/rl/` — tested GRPO/PPO losses, GAE and rollout collector.
+- `scripts/eval/` — 30-episode manifest, predicates, mock/AirSim evaluators.
+- `src/` — Rust surrogate simulator, policies, analysis.
 
-## Train M1 and run the surrogate experiment
+## Documentation
 
-```bash
-./target/release/dronevla m1 --uavflow data/uavflow_sim.jsonl --out runs/m1.json
-./target/release/dronevla experiment --out runs/experiment --seeds 0,1,2 --epochs 25 --groups 80
-```
+- [EXPERIMENT.md](EXPERIMENT.md) — conditions, data, metrics, budget.
+- [docs/EXPERIMENT_PLAN.md](docs/EXPERIMENT_PLAN.md) — detailed protocol.
+- [docs/DATA_BUILD.md](docs/DATA_BUILD.md) — 10% build result.
+- [docs/RESULTS.md](docs/RESULTS.md) — surrogate results.
 
-`runs/experiment/report.md` contains the condition table, paired bootstrap differences, and learning curves.
+## Limits
 
-## Actual AirSimNH
-
-`scripts/airsimnh_eval_uavflow.py` expects a running AirSimNH RPC endpoint on `127.0.0.1:41451` and the reference Python harness in `/workspace/thesis`. It flies approach / pass / orbit / hold intents and scores them from the actual trajectory.
-
-## Training strategy
-
-- **SFT:** official OpenVLA (`vla-scripts/finetune.py`) and official OpenPI (`scripts/train.py`). Do not reimplement either.
-- **RL:** veRL for OpenVLA GRPO/PPO; a thin JAX GRPO loop for pi0-FAST.
-- **UAV adapter:** the only homebrew training-adjacent component is `scripts/airsim_rollout.py` (observation, action, reward, token/action JSONL).
-- **Rust crate:** a surrogate protocol harness, not the thesis model.
-
-See `integrations/` for the exact official-repo paths.
-
-## Status and limits
-
-- The Rust policy is a compact **goal-conditioned linear surrogate**, not OpenVLA-7B or π₀-FAST. It exists to exercise the protocol, the AirSimNH bridge, and the analysis end to end.
-- SFT data are the real UAV-Flow-Sim trajectories.
-- The OpenVLA-UAV checkpoint is the third-party UAV-Flow baseline (`wangxiangyu0814/OpenVLA-UAV`), not a checkpoint trained in this repository.
-- π₀-FAST UAV integration is not available in the reference artifacts.
-- The exact UAV-Flow-Eval UE4 `Collection` environment is Windows-only; actual AirSimNH 1.8.1 is used on Linux.
-
-## Results
-
-See [docs/RESULTS.md](docs/RESULTS.md).
+- Rust policy is a linear surrogate, not OpenVLA/π₀-FAST.
+- The released OpenVLA-UAV checkpoint is a third-party UAV-Flow baseline.
+- No official π₀-FAST UAV checkpoint exists; it must be trained here.
+- Live AirSim evaluation requires a separately running AirSimNH pod.
