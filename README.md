@@ -45,6 +45,15 @@ python3 -m venv .venv && .venv/bin/pip install pyarrow numpy
 
 `scripts/airsimnh_eval_uavflow.py` expects a running AirSimNH RPC endpoint on `127.0.0.1:41451` and the reference Python harness in `/workspace/thesis`. It flies approach / pass / orbit / hold intents and scores them from the actual trajectory.
 
+## Training strategy
+
+- **SFT:** official OpenVLA (`vla-scripts/finetune.py`) and official OpenPI (`scripts/train.py`). Do not reimplement either.
+- **RL:** veRL for OpenVLA GRPO/PPO; a thin JAX GRPO loop for pi0-FAST.
+- **UAV adapter:** the only homebrew training-adjacent component is `scripts/airsim_rollout.py` (observation, action, reward, token/action JSONL).
+- **Rust crate:** a surrogate protocol harness, not the thesis model.
+
+See `integrations/` for the exact official-repo paths.
+
 ## Status and limits
 
 - The Rust policy is a compact **goal-conditioned linear surrogate**, not OpenVLA-7B or π₀-FAST. It exists to exercise the protocol, the AirSimNH bridge, and the analysis end to end.
