@@ -50,3 +50,21 @@ OpenVLA's stack targets Python 3.10/3.11, not 3.12:
 - π₀-FAST token log-prob server: code merged in PR #4; runtime test still needed.
 - Model-specific GRPO/PPO optimizer loops.
 - Live AirSim evaluation (needs a simulator pod).
+
+## π₀-FAST log-prob runtime
+
+The patch and server compile against a fresh OpenPI checkout. Runtime was not
+executed:
+
+- community A100-40 never published SSH;
+- secure A40/A100/H100 capacities were unavailable at creation time;
+- the CPU pod has a 4 GB cgroup limit, too small for the 3B checkpoint.
+
+Next run, once a GPU is available:
+
+```bash
+bash /tmp/pi0_run.sh   # installs OpenPI, applies the patch, runs the droid observation test
+```
+
+Expected output includes `tokens`, `logprobs` and `token_mask` with the same
+decoding length, then `PI0_VERIFY_OK`.
