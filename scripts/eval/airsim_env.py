@@ -96,6 +96,8 @@ class AirSimEnv:
         self.steps = 0
         self.last_collision = False
         self._teleport_step = True
+        self._pos = None
+        self._yaw = None
 
         try:
             self.client = self.airsim.MultirotorClient(ip=ip, port=port)
@@ -127,6 +129,8 @@ class AirSimEnv:
         return self.client.simGetVehiclePose(vehicle_name=self.vehicle_name)
 
     def position_ned_m(self) -> list[float]:
+        if self._pos is not None:
+            return [float(v) for v in self._pos]
         pose = self._pose()
         return [
             float(pose.position.x_val),
@@ -135,6 +139,8 @@ class AirSimEnv:
         ]
 
     def yaw_rad(self) -> float:
+        if self._yaw is not None:
+            return float(self._yaw)
         pose = self._pose()
         return float(self.airsim.to_eularian_angles(pose.orientation)[2])
 
@@ -181,9 +187,13 @@ class AirSimEnv:
             pass
         self._enable_control()
         self._set_pose(pose, yaw)
+        self._pos = np.asarray(pose, dtype=float).copy()
+        self._yaw = float(yaw)
         self.steps = 0
         self.last_collision = False
         self._teleport_step = True
+        self._pos = None
+        self._yaw = None
         # Give AirSimNH one rendered frame after teleporting.
         time.sleep(min(0.05, self.timeout_s))
         return self.observe(capture_image=False)
@@ -219,12 +229,8 @@ class AirSimEnv:
             info["collision"] = self.last_collision
             return self.observe(capture_image=False), info
 
-        pose = self._pose()
-        position = np.array(
-            [pose.position.x_val, pose.position.y_val, pose.position.z_val],
-            dtype=float,
-        )
-        yaw = float(self.airsim.to_eularian_angles(pose.orientation)[2])
+        position = self._pos.copy() if self._pos is not None else np.array(self.position_ned_m(), dtype=float)
+        yaw = float(self._yaw) if self._yaw is not None else self.yaw_rad()
 
         delta = arr[:3].copy()
         norm = float(np.linalg.norm(delta))
@@ -243,7 +249,10 @@ class AirSimEnv:
             info["collision"] = self.last_collision
             return self.observe(capture_image=False), info
 
-        self._set_pose(new_position, _wrap_angle(yaw + dyaw))
+        new_yaw = _wrap_angle(yaw + dyaw)
+        self._set_pose(new_position, new_yaw)
+        self._pos = new_position
+        self._yaw = new_yaw
         self.steps += 1
         time.sleep(0.05)
         try:
