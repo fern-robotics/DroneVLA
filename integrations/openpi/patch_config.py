@@ -3,6 +3,8 @@ from pathlib import Path
 
 p = Path("/workspace/openpi/src/openpi/training/config.py")
 s = p.read_text()
+if "import openpi.policies.uav_policy as uav_policy" not in s:
+    s = "import openpi.policies.uav_policy as uav_policy\n" + s
 if "\nimport os\n" not in "\n" + s:
     s = "import os\n" + s
 if "uav_policy" in s:
