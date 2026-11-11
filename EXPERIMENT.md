@@ -3,7 +3,7 @@
 **Thesis title:** *DroneVL: Evaluating GRPO and PPO after LoRA-SFT for Instruction-Conditioned UAV Navigation*  
 **Indonesian title:** *DroneVL: Evaluasi GRPO dan PPO setelah LoRA-SFT untuk Navigasi UAV Berbasis Instruksi*
 
-**Status:** environment and SFT path validated; GRPO/PPO trainers not implemented; budget-constrained pilot.  
+**Status:** data pipeline, official SFT integrations, GRPO/PPO RL core and 30-episode eval suite implemented; full model-specific RL adapters and 7B smoke tests still pending.  
 **Budget cap:** USD 20–30.  
 **Last updated:** 2026-11-11
 
@@ -208,6 +208,24 @@ These are development results. None of them is a substitute for the missing full
 - Aviation-safety claims are out of scope.
 
 ---
+
+## 9b. Implemented code (2026-11-11)
+
+- `scripts/build_dataset_online.py` — single-pass 10% UAV-Flow-Sim subset; stratified episode selection, ID/OOD splits, image/JSONL export, stats/validation.
+- `scripts/dataset/lerobot_writer.py` — split-specific LeRobot datasets for pi0-FAST (`uav_flow_sim_train/dev/test`).
+- `scripts/dataset/rlds_builder.py` + `integrations/openvla/patch_openvla_uav.py` — RLDS export and OpenVLA registry patch (state 4→6, action 4→7 zero-padding).
+- `scripts/run_openvla_sft.sh`, `scripts/run_pi0_sft.sh` — official-repo SFT launchers.
+- `training/rl/` — tested GRPO/PPO losses, GAE, group advantages, rollout collector (7 CPU tests).
+- `scripts/collect_rollouts.py` — UAV adapter → RL group collection; requires a policy server returning tokens/logprobs.
+- `scripts/eval/` — frozen 30-episode manifest (22 ID/8 OOD), geometric predicates, mock + AirSim evaluator, VLA policy bridge (15 tests).
+- `scripts/airsim_rollout.py` — thin observation/action/reward/token JSONL adapter (mock tested).
+
+Known gaps before the full thesis matrix:
+
+1. OpenVLA SFT has not been smoke-tested on a GPU after the RLDS build.
+2. The OpenVLA and pi0-FAST servers currently expose actions; RL needs token ids and log-probabilities from the model servers.
+3. GRPO/PPO losses are tested, but model-specific optimizer loops are not wired to OpenVLA/pi0-FAST.
+4. AirSim `--airsim` eval and 100-group RL runs require a live AirSimNH pod.
 
 ## 10. Reproduction
 

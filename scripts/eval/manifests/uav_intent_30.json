@@ -1,0 +1,1316 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "uav_intent_30",
+  "reference_frame": "world_NED",
+  "description": "Frozen 30-episode AirSimNH UAV intent suite: 22 ID + 8 OOD, deterministic NED geometry, no randomness.",
+  "episodes": [
+    {
+      "episode_id": "id-approach-01",
+      "split": "id",
+      "ood": false,
+      "family": "approach",
+      "template": "approach:stop_at_distance",
+      "instruction": "Approach the red circle and stop 4.0 m away.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 4.0,
+          "tolerance_m": 0.6,
+          "axis": "horizontal"
+        }
+      ],
+      "max_steps": 100,
+      "dt_s": 0.2,
+      "reference_path_m": 6.0
+    },
+    {
+      "episode_id": "id-approach-02",
+      "split": "id",
+      "ood": false,
+      "family": "approach",
+      "template": "approach:stop_at_distance",
+      "instruction": "Approach the blue square and stop 5.0 m away.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            12.0,
+            4.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 5.0,
+          "tolerance_m": 0.6,
+          "axis": "horizontal"
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 7.649
+    },
+    {
+      "episode_id": "id-approach-03",
+      "split": "id",
+      "ood": false,
+      "family": "approach",
+      "template": "approach:stop_at_distance",
+      "instruction": "Approach the green cross and stop 3.0 m away.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            9.0,
+            -3.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 3.0,
+          "tolerance_m": 0.5,
+          "axis": "horizontal"
+        }
+      ],
+      "max_steps": 100,
+      "dt_s": 0.2,
+      "reference_path_m": 6.487
+    },
+    {
+      "episode_id": "id-pass-left-01",
+      "split": "id",
+      "ood": false,
+      "family": "pass_left",
+      "template": "pass:left_side",
+      "instruction": "Pass the red circle on its left side with 1.2 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "left",
+          "clearance_m": 1.2
+        }
+      ],
+      "max_steps": 110,
+      "dt_s": 0.2,
+      "reference_path_m": 12.089
+    },
+    {
+      "episode_id": "id-pass-left-02",
+      "split": "id",
+      "ood": false,
+      "family": "pass_left",
+      "template": "pass:left_side",
+      "instruction": "Pass the yellow triangle on its left side with 1.5 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            11.0,
+            -2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          1.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "left",
+          "clearance_m": 1.5
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 13.521
+    },
+    {
+      "episode_id": "id-pass-right-01",
+      "split": "id",
+      "ood": false,
+      "family": "pass_right",
+      "template": "pass:right_side",
+      "instruction": "Pass the blue square on its right side with 1.2 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            10.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "right",
+          "clearance_m": 1.2
+        }
+      ],
+      "max_steps": 110,
+      "dt_s": 0.2,
+      "reference_path_m": 12.285
+    },
+    {
+      "episode_id": "id-pass-right-02",
+      "split": "id",
+      "ood": false,
+      "family": "pass_right",
+      "template": "pass:right_side",
+      "instruction": "Pass the green cross on its right side with 1.5 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            11.0,
+            1.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          -1.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "right",
+          "clearance_m": 1.5
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 13.302
+    },
+    {
+      "episode_id": "id-orbit-cw-01",
+      "split": "id",
+      "ood": false,
+      "family": "orbit_cw",
+      "template": "orbit:clockwise_min_arc",
+      "instruction": "Orbit clockwise around the red circle for at least 180 degrees at 3.5 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          6.5,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "clockwise",
+          "min_angle_deg": 180.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 220,
+      "dt_s": 0.2,
+      "reference_path_m": 10.996
+    },
+    {
+      "episode_id": "id-orbit-cw-02",
+      "split": "id",
+      "ood": false,
+      "family": "orbit_cw",
+      "template": "orbit:clockwise_min_arc",
+      "instruction": "Orbit clockwise around the green cross for at least 200 degrees at 3.0 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            11.0,
+            3.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          8.0,
+          3.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "clockwise",
+          "min_angle_deg": 200.0,
+          "radius_m": 3.0,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 240,
+      "dt_s": 0.2,
+      "reference_path_m": 10.472
+    },
+    {
+      "episode_id": "id-orbit-ccw-01",
+      "split": "id",
+      "ood": false,
+      "family": "orbit_ccw",
+      "template": "orbit:counterclockwise_min_arc",
+      "instruction": "Orbit counterclockwise around the blue square for at least 180 degrees at 3.5 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          6.5,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "counterclockwise",
+          "min_angle_deg": 180.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 220,
+      "dt_s": 0.2,
+      "reference_path_m": 10.996
+    },
+    {
+      "episode_id": "id-orbit-ccw-02",
+      "split": "id",
+      "ood": false,
+      "family": "orbit_ccw",
+      "template": "orbit:counterclockwise_min_arc",
+      "instruction": "Orbit counterclockwise around the yellow triangle for at least 200 degrees at 3.0 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            12.0,
+            -2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          9.0,
+          -2.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "counterclockwise",
+          "min_angle_deg": 200.0,
+          "radius_m": 3.0,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 240,
+      "dt_s": 0.2,
+      "reference_path_m": 10.472
+    },
+    {
+      "episode_id": "id-hold-01",
+      "split": "id",
+      "ood": false,
+      "family": "hold_at_distance",
+      "template": "hold_at:distance_duration",
+      "instruction": "Hold 4.0 m from the red circle for 2.0 s.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 4.0,
+          "tolerance_m": 0.5,
+          "duration_s": 2.0
+        }
+      ],
+      "max_steps": 150,
+      "dt_s": 0.2,
+      "reference_path_m": 6.0
+    },
+    {
+      "episode_id": "id-hold-02",
+      "split": "id",
+      "ood": false,
+      "family": "hold_at_distance",
+      "template": "hold_at:distance_duration",
+      "instruction": "Hold 5.0 m from the blue square for 1.5 s.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            11.0,
+            3.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          1.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 5.0,
+          "tolerance_m": 0.5,
+          "duration_s": 1.5
+        }
+      ],
+      "max_steps": 150,
+      "dt_s": 0.2,
+      "reference_path_m": 5.44
+    },
+    {
+      "episode_id": "id-hold-03",
+      "split": "id",
+      "ood": false,
+      "family": "hold_at_distance",
+      "template": "hold_at:distance_duration",
+      "instruction": "Hold 3.0 m from the yellow triangle for 2.5 s.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            9.0,
+            -4.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          -1.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 3.0,
+          "tolerance_m": 0.4,
+          "duration_s": 2.5
+        }
+      ],
+      "max_steps": 180,
+      "dt_s": 0.2,
+      "reference_path_m": 6.487
+    },
+    {
+      "episode_id": "id-climb-01",
+      "split": "id",
+      "ood": false,
+      "family": "climb",
+      "template": "altitude:climb",
+      "instruction": "Climb 3.0 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -13.0,
+          "tolerance_m": 0.4,
+          "direction": "climb"
+        }
+      ],
+      "max_steps": 80,
+      "dt_s": 0.2,
+      "reference_path_m": 3.0
+    },
+    {
+      "episode_id": "id-climb-02",
+      "split": "id",
+      "ood": false,
+      "family": "climb",
+      "template": "altitude:climb",
+      "instruction": "Climb 2.0 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            12.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -12.0,
+          "tolerance_m": 0.4,
+          "direction": "climb"
+        }
+      ],
+      "max_steps": 80,
+      "dt_s": 0.2,
+      "reference_path_m": 2.0
+    },
+    {
+      "episode_id": "id-descend-01",
+      "split": "id",
+      "ood": false,
+      "family": "descend",
+      "template": "altitude:descend",
+      "instruction": "Descend 2.0 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            10.0,
+            -2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -8.0,
+          "tolerance_m": 0.4,
+          "direction": "descend"
+        }
+      ],
+      "max_steps": 80,
+      "dt_s": 0.2,
+      "reference_path_m": 2.0
+    },
+    {
+      "episode_id": "id-descend-02",
+      "split": "id",
+      "ood": false,
+      "family": "descend",
+      "template": "altitude:descend",
+      "instruction": "Descend 2.5 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            11.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -7.5,
+          "tolerance_m": 0.4,
+          "direction": "descend"
+        }
+      ],
+      "max_steps": 80,
+      "dt_s": 0.2,
+      "reference_path_m": 2.5
+    },
+    {
+      "episode_id": "id-comp-approach-pass-left",
+      "split": "id",
+      "ood": false,
+      "family": "composed",
+      "template": "composed:approach_then_pass_left",
+      "instruction": "Approach the red circle to 6.0 m, then pass it on the left with 1.2 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 6.0,
+          "tolerance_m": 0.6,
+          "axis": "horizontal"
+        },
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "left",
+          "clearance_m": 1.2
+        }
+      ],
+      "max_steps": 160,
+      "dt_s": 0.2,
+      "reference_path_m": 12.176
+    },
+    {
+      "episode_id": "id-comp-pass-right-orbit-cw",
+      "split": "id",
+      "ood": false,
+      "family": "composed",
+      "template": "composed:pass_right_then_orbit_cw",
+      "instruction": "Pass the blue square on the right with 1.2 m clearance, then orbit it clockwise for at least 180 degrees at 3.5 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "right",
+          "clearance_m": 1.2
+        },
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "clockwise",
+          "min_angle_deg": 180.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 260,
+      "dt_s": 0.2,
+      "reference_path_m": 24.253
+    },
+    {
+      "episode_id": "id-comp-climb-hold",
+      "split": "id",
+      "ood": false,
+      "family": "composed",
+      "template": "composed:climb_then_hold_at",
+      "instruction": "Climb 3.0 m, then hold 4.0 m from the green cross for 1.5 s.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            10.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -13.0,
+          "tolerance_m": 0.4,
+          "direction": "climb"
+        },
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 4.0,
+          "tolerance_m": 0.5,
+          "duration_s": 1.5
+        }
+      ],
+      "max_steps": 200,
+      "dt_s": 0.2,
+      "reference_path_m": 9.198
+    },
+    {
+      "episode_id": "id-comp-descend-orbit-ccw",
+      "split": "id",
+      "ood": false,
+      "family": "composed",
+      "template": "composed:descend_then_orbit_ccw",
+      "instruction": "Descend 2.0 m, then orbit the yellow triangle counterclockwise for at least 180 degrees at 3.5 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          6.5,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -8.0,
+          "tolerance_m": 0.4,
+          "direction": "descend"
+        },
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "counterclockwise",
+          "min_angle_deg": 180.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 260,
+      "dt_s": 0.2,
+      "reference_path_m": 12.996
+    },
+    {
+      "episode_id": "ood-approach-01",
+      "split": "ood",
+      "ood": true,
+      "family": "approach",
+      "template": "ood:approach_halt_short",
+      "instruction": "Fly toward the red circle, coming to rest 3.0 m short of it.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            12.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          -1.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 3.0,
+          "tolerance_m": 0.6,
+          "axis": "horizontal"
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 9.369
+    },
+    {
+      "episode_id": "ood-pass-left-01",
+      "split": "ood",
+      "ood": true,
+      "family": "pass_left",
+      "template": "ood:pass_left_keep_right",
+      "instruction": "Slide past the blue square, keeping it to your right with 1.4 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            10.0,
+            1.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "left",
+          "clearance_m": 1.4
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 12.171
+    },
+    {
+      "episode_id": "ood-pass-right-01",
+      "split": "ood",
+      "ood": true,
+      "family": "pass_right",
+      "template": "ood:pass_right_keep_left",
+      "instruction": "Slide past the green cross, keeping it to your left with 1.4 m clearance.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            10.0,
+            -1.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "right",
+          "clearance_m": 1.4
+        }
+      ],
+      "max_steps": 120,
+      "dt_s": 0.2,
+      "reference_path_m": 12.171
+    },
+    {
+      "episode_id": "ood-orbit-cw-01",
+      "split": "ood",
+      "ood": true,
+      "family": "orbit_cw",
+      "template": "ood:orbit_cw_long_arc",
+      "instruction": "Make a 240-degree clockwise turn around the yellow triangle at roughly 3.5 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            11.0,
+            2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          7.5,
+          2.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "clockwise",
+          "min_angle_deg": 240.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 260,
+      "dt_s": 0.2,
+      "reference_path_m": 14.661
+    },
+    {
+      "episode_id": "ood-orbit-ccw-01",
+      "split": "ood",
+      "ood": true,
+      "family": "orbit_ccw",
+      "template": "ood:orbit_ccw_long_arc",
+      "instruction": "Make a 240-degree counterclockwise turn around the red circle at roughly 3.5 m.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "red",
+          "shape": "circle",
+          "position_ned_m": [
+            10.0,
+            -2.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          6.5,
+          -2.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "counterclockwise",
+          "min_angle_deg": 240.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 260,
+      "dt_s": 0.2,
+      "reference_path_m": 14.661
+    },
+    {
+      "episode_id": "ood-hold-01",
+      "split": "ood",
+      "ood": true,
+      "family": "hold_at_distance",
+      "template": "ood:hold_at_offset",
+      "instruction": "Remain 5.0 m from the green cross for 3.0 s without drifting.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "green",
+          "shape": "cross",
+          "position_ned_m": [
+            12.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 5.0,
+          "tolerance_m": 0.5,
+          "duration_s": 3.0
+        }
+      ],
+      "max_steps": 200,
+      "dt_s": 0.2,
+      "reference_path_m": 7.0
+    },
+    {
+      "episode_id": "ood-comp-approach-climb-hold",
+      "split": "ood",
+      "ood": true,
+      "family": "composed",
+      "template": "ood:composed_approach_climb_hold",
+      "instruction": "Approach the blue square to 5 m, climb 2 m, then hold 4 m from it for 1.5 s.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "blue",
+          "shape": "square",
+          "position_ned_m": [
+            10.0,
+            0.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "distance_to_marker",
+          "marker_id": "M1",
+          "distance_m": 5.0,
+          "tolerance_m": 0.6,
+          "axis": "horizontal"
+        },
+        {
+          "type": "altitude",
+          "target_z_m": -12.0,
+          "tolerance_m": 0.4,
+          "direction": "climb"
+        },
+        {
+          "type": "hold_at_distance",
+          "marker_id": "M1",
+          "distance_m": 4.0,
+          "tolerance_m": 0.5,
+          "duration_s": 1.5
+        }
+      ],
+      "max_steps": 240,
+      "dt_s": 0.2,
+      "reference_path_m": 8.0
+    },
+    {
+      "episode_id": "ood-comp-descend-pass-left-orbit-ccw",
+      "split": "ood",
+      "ood": true,
+      "family": "composed",
+      "template": "ood:composed_descend_pass_left_orbit_ccw",
+      "instruction": "Descend 2 m, pass the yellow triangle on the left with 1.3 m clearance, then orbit it counterclockwise for at least 180 degrees at 3.5 m radius.",
+      "reference_frame": "world_NED",
+      "markers": [
+        {
+          "marker_id": "M1",
+          "color": "yellow",
+          "shape": "triangle",
+          "position_ned_m": [
+            10.0,
+            1.0,
+            -10.0
+          ],
+          "size_m": 1.5
+        }
+      ],
+      "start_pose": {
+        "position_ned_m": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "yaw_rad": 0.0
+      },
+      "success_predicates": [
+        {
+          "type": "altitude",
+          "target_z_m": -8.0,
+          "tolerance_m": 0.4,
+          "direction": "descend"
+        },
+        {
+          "type": "pass_side",
+          "marker_id": "M1",
+          "side": "left",
+          "clearance_m": 1.3
+        },
+        {
+          "type": "orbit",
+          "marker_id": "M1",
+          "direction": "counterclockwise",
+          "min_angle_deg": 180.0,
+          "radius_m": 3.5,
+          "radius_tolerance_m": 2.5
+        }
+      ],
+      "max_steps": 300,
+      "dt_s": 0.2,
+      "reference_path_m": 26.264
+    }
+  ]
+}
