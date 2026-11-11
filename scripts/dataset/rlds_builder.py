@@ -29,7 +29,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
             builder=self,
             description="UAV-Flow-Sim episodes exported by DroneVL.",
             features=tfds.features.FeaturesDict({
-                "steps": tfds.features.Sequence({
+                "steps": tfds.features.Dataset({
                     "observation": {
                         "image": tfds.features.Image(shape=(256, 256, 3)),
                         "state": tfds.features.Tensor(shape=(6,), dtype=tf.float32),
