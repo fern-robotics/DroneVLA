@@ -7,7 +7,7 @@ Instruction-conditioned UAV navigation with **OpenVLA-7B** and **π₀-FAST**: L
 | Area | State |
 |---|---|
 | Data | 10% UAV-Flow-Sim subset built and validated (936 episodes, 765/90/81 splits, 81 OOD) |
-| π₀-FAST SFT | Official OpenPI path; 2-step smoke passed; log-prob patch compiled |
+| π₀-FAST SFT | Official OpenPI path; 2-step smoke passed; token log-prob path verified on A40 |
 | OpenVLA SFT | Official repo; 1-step LoRA-SFT verified on A100 (484 MB adapter) |
 | GRPO / PPO | Tested RL core; model-specific adapters pending |
 | Evaluation | 30-episode AirSimNH suite (22 ID / 8 OOD); mock tested, live AirSim pending |

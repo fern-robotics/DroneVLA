@@ -33,8 +33,10 @@ def patch_model(path: Path) -> None:
         "            output_tokens = put_along_last_axis(output_tokens, jnp.broadcast_to(step, (token.shape[0], 1)), token)",
         "            output_tokens = put_along_last_axis(output_tokens, jnp.broadcast_to(step, (token.shape[0], 1)), token)\n"
         "            token_logp = jnp.take_along_axis(\n"
-        "                jax.nn.log_softmax(last_logit, axis=-1), token[:, None, None], axis=-1\n"
-        "            )[:, 0]\n"
+        "                jax.nn.log_softmax(last_logit, axis=-1),\n"
+        "                token.reshape((token.shape[0], 1, 1)),\n"
+        "                axis=-1,\n"
+        "            ).reshape((token.shape[0], 1))\n"
         "            output_logprobs = put_along_last_axis(\n"
         "                output_logprobs, jnp.broadcast_to(step, (token.shape[0], 1)), token_logp\n"
         "            )",
@@ -46,10 +48,8 @@ def patch_model(path: Path) -> None:
     s = s.replace(
         "        _, _, output_tokens, _, _, _ = jax.lax.while_loop(\n            cond, step, (rng, last_logit, output_tokens, kv_cache, False, 0)\n        )\n        return output_tokens",
         "        _, _, output_tokens, output_logprobs, _, _, _ = jax.lax.while_loop(\n            cond, step, (rng, last_logit, output_tokens, output_logprobs, kv_cache, False, 0)\n        )\n"
-        "        if return_logprobs:\n"
-        "            eos_mask = output_tokens != PALIGEMMA_EOS_TOKEN\n"
-        "            return output_tokens, output_logprobs, eos_mask\n"
-        "        return output_tokens",
+        "        eos_mask = output_tokens != PALIGEMMA_EOS_TOKEN\n"
+        "        return output_tokens, output_logprobs, eos_mask",
     )
     path.write_text(s)
     print("patched", path)

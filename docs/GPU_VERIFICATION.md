@@ -68,3 +68,23 @@ bash /tmp/pi0_run.sh   # installs OpenPI, applies the patch, runs the droid obse
 
 Expected output includes `tokens`, `logprobs` and `token_mask` with the same
 decoding length, then `PI0_VERIFY_OK`.
+
+## π₀-FAST log-prob runtime — verified
+
+Verified on an A40 48 GB with the base checkpoint and `pi0_fast_droid`:
+
+- output keys: `actions`, `tokens`, `logprobs`, `token_mask`, `state`
+- `tokens` / `logprobs` / `token_mask`: `(256,)` each
+- first log-probs: `0, 0, 0, -3.59, -2.84`
+- action/token arrays came from the FAST decoder
+
+Two inference bugs were found and fixed:
+
+1. `token` is `(B, 1)`, so `token[:, None, None]` produced a 4-D gather index.
+   Fixed with `reshape((B, 1, 1))`.
+2. `return_logprobs` was passed into a jitted function, so the Python `if`
+   became a traced boolean. The patched sampler now always returns
+   `(tokens, logprobs, mask)` and `Policy.infer` detects the tuple.
+
+The websocket server uses the same patched policy; the droid observation test
+exercises the log-prob path directly.
