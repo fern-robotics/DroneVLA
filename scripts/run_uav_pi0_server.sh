@@ -8,7 +8,8 @@ CONFIG="${CONFIG:-pi0_fast_uav_low_mem}"
 PORT="${PORT:-8000}"
 export PATH="$HOME/.local/bin:$PATH"
 cd "$OPENPI_DIR"
-exec uv run python /workspace/DroneVLA/scripts/serve_pi0_logprobs.py \
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+exec uv run python "$SCRIPT_DIR/serve_pi0_logprobs.py" \
   --config "$CONFIG" \
   --dir "$CHECKPOINT" \
   --port "$PORT"
