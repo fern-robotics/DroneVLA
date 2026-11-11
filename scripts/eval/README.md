@@ -161,3 +161,27 @@ The tests cover:
 - lazy AirSim import and the helpful missing-package error.
 
 No test imports the `airsim` package at test time.
+
+## Real VLA policy
+
+`evaluate_vla.py` drives a model server through the same 30-episode manifest:
+
+```bash
+# pi0-FAST / OpenPI websocket
+PYTHONPATH=. python -m scripts.eval.evaluate_vla \
+  --env airsim --policy websocket --host 127.0.0.1 --port 8000 \
+  --out runs/eval/pi0_fast
+
+# OpenVLA HTTP server (actions + tokens + log-probs)
+PYTHONPATH=. python -m scripts.eval.evaluate_vla \
+  --env airsim --policy http --policy-url http://127.0.0.1:8000 \
+  --out runs/eval/openvla
+```
+
+It logs `episodes/<id>.jsonl` with every action, token, log-probability,
+latency and safety info, plus `summary.json`.
+
+The AirSim adapter is kinematic and marker-free: markers are part of the scene
+manifest, not spawned by this code. Set `--airsim-ip/--airsim-port` for a
+remote pod. The websocket policy returns actions only; token/log-probability
+fields are required only for RL collection.
