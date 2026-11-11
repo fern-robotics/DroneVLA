@@ -53,7 +53,7 @@ def run(args: argparse.Namespace) -> dict:
         ep_log.parent.mkdir(parents=True, exist_ok=True)
         with ep_log.open("w") as log:
             for step in range(int(episode.get("max_steps", 200))):
-                obs = env.observe(capture_image=True) if use_airsim else env.observe()
+                obs = env.observe(capture_image=use_airsim and args.capture_image) if use_airsim else env.observe()
                 pos = np.asarray(obs["position_ned_m"], dtype=float)
                 state = [pos[0] - start[0], pos[1] - start[1], pos[2] - start[2],
                          (float(obs["yaw_rad"]) - start_yaw + np.pi) % (2 * np.pi) - np.pi]
@@ -113,6 +113,7 @@ def main() -> None:
     ap.add_argument("--dt", type=float, default=0.2)
     ap.add_argument("--airsim-ip", default="127.0.0.1")
     ap.add_argument("--airsim-port", type=int, default=41451)
+    ap.add_argument("--capture-image", action="store_true", help="capture RGB for a VLA; off for scripted mock smoke tests")
     args = ap.parse_args()
     summary = run(args)
     print(json.dumps({k: v for k, v in summary.items() if k != "rows"}, indent=2))

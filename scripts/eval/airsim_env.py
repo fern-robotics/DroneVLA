@@ -95,10 +95,17 @@ class AirSimEnv:
         self.timeout_s = float(timeout_s)
         self.steps = 0
         self.last_collision = False
+        self._teleport_step = True
 
         try:
             self.client = self.airsim.MultirotorClient(ip=ip, port=port)
             self.client.confirmConnection()
+            try:
+                vehicles = self.client.listVehicles()
+                if vehicles and self.vehicle_name not in vehicles:
+                    self.vehicle_name = vehicles[0]
+            except Exception:
+                pass
         except Exception as exc:  # pragma: no cover - requires a live server
             raise AirSimUnavailableError(
                 "Could not connect to an AirSimNH RPC endpoint at "
@@ -176,6 +183,7 @@ class AirSimEnv:
         self._set_pose(pose, yaw)
         self.steps = 0
         self.last_collision = False
+        self._teleport_step = True
         # Give AirSimNH one rendered frame after teleporting.
         time.sleep(min(0.05, self.timeout_s))
         return self.observe(capture_image=False)
@@ -237,6 +245,7 @@ class AirSimEnv:
 
         self._set_pose(new_position, _wrap_angle(yaw + dyaw))
         self.steps += 1
+        time.sleep(0.05)
         try:
             collision_info = self.client.simGetCollisionInfo(
                 vehicle_name=self.vehicle_name
@@ -244,6 +253,10 @@ class AirSimEnv:
             self.last_collision = bool(collision_info.has_collided)
         except Exception:
             self.last_collision = False
+        if self._teleport_step:
+            # simGetCollisionInfo can stay latched for one frame after a teleport.
+            self.last_collision = False
+            self._teleport_step = False
         info["collision"] = self.last_collision
         return self.observe(capture_image=False), info
 

@@ -107,3 +107,8 @@ UAV_SERVER_OK
 The client needed websocket keepalive disabled because the first JAX inference
 exceeds the default ping timeout. That workaround is already in
 `scripts/eval/vla_policy.py`.
+
+
+## Live AirSimNH
+
+See [AIRSIM_LIVE.md](AIRSIM_LIVE.md). A one-episode live smoke ran 100 steps with no collision; the scripted policy scored 0.086 under software rendering.
