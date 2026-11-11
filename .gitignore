@@ -5,3 +5,7 @@ data/uavflow/
 data/uav_flow_*/
 data/*.log
 .pytest_cache/
+data/uavflow_sim.jsonl
+data/uavflow_stats.json
+runs/
+target/
