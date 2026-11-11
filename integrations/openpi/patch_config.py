@@ -48,21 +48,22 @@ s = s.replace(marker, block, 1)
 cfg = '''    TrainConfig(
         name="pi0_fast_uav_low_mem",
         model=pi0_fast.Pi0FASTConfig(
-            action_dim=4, action_horizon=8, max_token_len=180, paligemma_variant="gemma_2b_lora"
+            action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b_lora"
         ),
         data=LeRobotUAVDataConfig(
             repo_id=os.environ.get("UAV_REPO_ID", "uav_flow_sim_train"),
             base_config=DataConfig(prompt_from_task=True),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_fast_base/params"),
-        num_train_steps=600,
+        num_train_steps=10000,
         batch_size=4,
-        save_interval=300,
+        save_interval=2000,
+        keep_period=10000,
         num_workers=4,
         ema_decay=None,
         wandb_enabled=False,
         freeze_filter=pi0_fast.Pi0FASTConfig(
-            action_dim=4, action_horizon=8, max_token_len=180, paligemma_variant="gemma_2b_lora"
+            action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b_lora"
         ).get_freeze_filter(),
     ),
 ]'''
