@@ -1,36 +1,40 @@
 #!/usr/bin/env bash
-# One-GPU verification: pi0-FAST config, OpenVLA RLDS + 1-step LoRA-SFT.
+# One-GPU verification: OpenVLA RLDS + one-step official LoRA-SFT.
+# Verified on A100 80GB; OpenVLA needs Python 3.10/3.11, not 3.12.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq git curl python3-venv ffmpeg >/dev/null 2>&1
-python3 -m venv /workspace/venv
-P=/workspace/venv/bin/python
-$P -m pip install -q --upgrade pip
-$P -m pip install -q pyarrow pillow numpy
+apt-get install -y -qq git curl ffmpeg >/dev/null 2>&1
+curl -LsSf https://astral.sh/uv/install.sh | sh >/tmp/uv-install.log 2>&1
+export PATH="$HOME/.local/bin:$PATH"
+uv python install 3.11
+uv venv /workspace/venv311 --python 3.11
+P=/workspace/venv311/bin/python
 cd /workspace
-if [ ! -d openvla ]; then git clone --depth 1 https://github.com/openvla/openvla.git openvla; fi
-$P -m pip install -q --no-deps -e /workspace/openvla
-$P -m pip install -q accelerate draccus==0.8.0 einops huggingface_hub json-numpy jsonlines matplotlib peft==0.11.1 protobuf rich sentencepiece==0.1.99 timm==0.9.10 tokenizers==0.19.1 torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 transformers==4.40.1 wandb tensorflow-cpu tensorflow-datasets
-$P -m pip install -q "dlimp @ git+https://github.com/moojink/dlimp_openvla" || echo "dlimp install failed (RLDS loader may need it)"
+[ -d openvla ] || git clone --depth 1 https://github.com/openvla/openvla.git openvla
+uv pip install --python "$P" -e /workspace/openvla
+uv pip install --python "$P" "numpy<2" "tensorflow-metadata==1.14.0" "protobuf==3.20.3" "wandb==0.16.6" pyarrow pillow
+uv pip install --python "$P" --no-deps "dlimp @ git+https://github.com/moojink/dlimp_openvla"
+uv pip install --python "$P" --no-deps tensorflow-graphics
 mkdir -p /workspace/data
 $P /workspace/scripts/build_dataset_online.py --shards 0 --out /workspace/data/uav_smoke --fraction 0.20 --formats jsonl
 cp /workspace/scripts/dataset/rlds_builder.py /workspace/data/uav_smoke/uav_flow_sim_dataset_builder.py
 cd /workspace/data/uav_smoke
 UAV_EXPORT_DIR=/workspace/data/uav_smoke $P - <<'PY'
 import importlib.util, tensorflow_datasets as tfds
-spec=importlib.util.spec_from_file_location("uav_flow_sim_dataset_builder","uav_flow_sim_dataset_builder.py")
-mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-b=mod.Builder(data_dir="/workspace/data/uav_smoke/rlds")
+spec = importlib.util.spec_from_file_location("uav_flow_sim_dataset_builder", "uav_flow_sim_dataset_builder.py")
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+b = mod.Builder(data_dir="/workspace/data/uav_smoke/rlds")
 b.download_and_prepare(download_dir="/workspace/data/uav_smoke/rlds")
 print("RLDS", b.info.splits)
 PY
 $P /workspace/integrations/openvla/patch_openvla_uav.py /workspace/openvla
 mkdir -p /workspace/runs/openvla_smoke
 cd /workspace/openvla
-WANDB_MODE=disabled $P -m torch.distributed.run --standalone --nnodes 1 --nproc-per-node 1 vla-scripts/finetune.py \
+WANDB_MODE=disabled MASTER_ADDR=127.0.0.1 MASTER_PORT=29525 RANK=0 WORLD_SIZE=1 LOCAL_RANK=0 \
+  $P vla-scripts/finetune.py \
   --vla_path openvla/openvla-7b \
-  --data_root_dir /workspace/data/uav_smoke/rlds \
+  --data_root_dir /workspace/data/uav_smoke/rlds/uav_flow_sim \
   --dataset_name uav_flow_sim \
   --run_root_dir /workspace/runs/openvla_smoke \
   --adapter_tmp_dir /workspace/runs/openvla_smoke/adapter-tmp \
