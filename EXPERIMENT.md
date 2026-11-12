@@ -3,7 +3,7 @@
 **Thesis title:** *DroneVL: Evaluating GRPO and PPO after LoRA-SFT for Instruction-Conditioned UAV Navigation*  
 **Indonesian title:** *DroneVL: Evaluasi GRPO dan PPO setelah LoRA-SFT untuk Navigasi UAV Berbasis Instruksi*
 
-**Status:** data pipeline, official SFT integrations, GRPO/PPO RL core and 30-episode eval suite implemented; full model-specific RL adapters and 7B smoke tests still pending.  
+**Status:** data pipeline, official SFT integrations, GRPO/PPO RL cores, real-OpenVLA AirSim video and 30-episode eval suite implemented; full π₀ nnx RL loop and the thesis M1/M2 matrix still pending.  
 **Budget cap:** USD 20–30.  
 **Last updated:** 2026-11-11
 
@@ -21,7 +21,7 @@ Primary comparison:
 2. **GRPO − SFT+** (is the gain from RL, or just more optimization?)
 3. **GRPO − PPO** (is any gain specific to GRPO's group-relative objective?)
 
-The main thesis claim is the GRPO-vs-SFT comparison. GRPO-vs-PPO is an **algorithm ablation**, not the primary hypothesis.
+The main thesis claim is the GRPO-vs-SFT comparison. GRPO-vs-PPO is an **algorithm ablation** with the same rollout budget, not the primary hypothesis.
 
 ---
 
@@ -63,7 +63,7 @@ M1, SFT+, GRPO and PPO share the same base weights, action interface, observatio
 
 - Target: **30 frozen episodes — 22 ID, 8 OOD**.
 - Every condition is evaluated on the same episode, initial state and budget.
-- Pilot limitation: one seed unless budget allows three.
+- Two seeds are planned; a third only if budget allows. The test manifest is frozen before final tuning.
 
 ---
 
@@ -102,7 +102,8 @@ Report success with Wilson intervals and intent score with bootstrap intervals. 
 - 256-bin action tokens × 4 dimensions.
 - Batch 8–16 on A100 80GB; batch 1–2 on A40.
 - Pilot budget: **5,000 steps** (paper-scale is 200,000 steps on 8×A100).
-- Released `OpenVLA-UAV` checkpoint can be used as a ready M1 if training budget is tight; this must be reported as a third-party full-data checkpoint, not our M1.
+- The official `finetune.py` uses `target_modules="all-linear"` and `alpha=min(rank,16)`. Run `integrations/openvla/patch_lora_config.py` to match the thesis (`q_proj`/`v_proj`, alpha 64).
+- The released `OpenVLA-UAV` checkpoint is **not** our M1; if used, report it as a third-party full-data checkpoint.
 
 #### π₀-FAST
 
@@ -130,7 +131,7 @@ Report success with Wilson intervals and intent score with bootstrap intervals. 
 
 ### Critical dependency
 
-**Neither GRPO nor PPO is implemented yet.** Only SFT is implemented. Before a 100-group run, the trainer must pass a 5-group smoke test that produces valid token log-probabilities, reference KL, advantages and a saved checkpoint.
+The PyTorch RL core is tested (GRPO/PPO losses, GAE, rollout collection), and the π₀ JAX loss/update core plus teacher-forced token scorer are implemented. The OpenPI **nnx** optimizer loop is still the missing integration. Before a 100-group run, each model adapter must pass a 5-group smoke test that produces valid token log-probabilities, reference KL, advantages and a saved checkpoint.
 
 ---
 
