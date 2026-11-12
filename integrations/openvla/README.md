@@ -58,12 +58,14 @@ torchrun --standalone --nnodes 1 --nproc-per-node 1 vla-scripts/finetune.py \
   --lora_rank 32 \
   --batch_size 8 \
   --grad_accumulation_steps 2 \
-  --learning_rate 5e-4 \
+  --max_steps 5000 \
+  --learning_rate 2e-4 \
   --image_aug False \
-  --save_steps 2000
+  --save_steps 1000
 ```
 
-- Reference recipe: rank 32, batch 16, lr 5e-4, A100 80GB.
+- Thesis recipe: rank 32, alpha 64, q_proj/v_proj, effective batch 16, lr 2e-4, 5,000 steps, A100 80GB.
+- The official repo uses `all-linear` and `alpha=min(rank,16)`; run `integrations/openvla/patch_lora_config.py` first.
 - On A100 80GB use batch 8–16; on A40 use batch 1–2.
 - Record steps, effective batch, and samples seen. Do not compare raw steps across models.
 
