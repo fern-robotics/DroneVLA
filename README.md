@@ -10,7 +10,7 @@ Instruction-conditioned UAV navigation with **OpenVLA-7B** and **π₀-FAST**: L
 | π₀-FAST SFT | Official OpenPI path; 2-step smoke passed; token log-prob path verified on A40 |
 | OpenVLA SFT | Official repo; 1-step LoRA-SFT verified on A100 (484 MB adapter) |
 | GRPO / PPO | Tested RL core; model-specific adapters pending |
-| Evaluation | 30-episode AirSimNH suite (22 ID / 8 OOD); mock tested, live AirSim pending |
+| Evaluation | 30-episode AirSimNH suite; real OpenVLA-UAV live episode: success 1.0, 0 collisions, MP4 recorded |
 | Rust crate | Surrogate protocol harness, not the thesis model |
 
 ## Quick start

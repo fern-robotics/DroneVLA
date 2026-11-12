@@ -37,3 +37,18 @@ collision reporting and the intent evaluator.
 - Ignore the one-frame collision latch after a teleport.
 - Image capture is optional; scripted smoke tests can skip the slow software
   framebuffer.
+
+## Real OpenVLA-UAV result
+
+The released `wangxiangyu0814/OpenVLA-UAV` checkpoint was served over HTTP and
+run through the same manifest/episode:
+
+- policy: OpenVLA-UAV, `unnorm_key="sim"`
+- **100 steps**
+- **success: 1.0**
+- **intent score: 1.0**
+- **collisions: 0**
+- video: `real_vla_airsim.mp4`, 256×144, 10 s
+
+The video is recorded directly from the AirSim camera stream while the policy is
+acting. The A100 pod used for this run has been deleted.
