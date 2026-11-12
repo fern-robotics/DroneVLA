@@ -57,6 +57,7 @@ def run(args: argparse.Namespace) -> dict:
         start_yaw = float(obs["yaw_rad"])
         ep_log = (out / "episodes" / f"{episode['episode_id']}.jsonl")
         ep_log.parent.mkdir(parents=True, exist_ok=True)
+        progress = 0.0
         with ep_log.open("w") as log:
             for step in range(int(episode.get("max_steps", 200))):
                 obs = env.observe(capture_image=use_airsim and args.capture_image) if use_airsim else env.observe()
@@ -69,8 +70,10 @@ def run(args: argparse.Namespace) -> dict:
                 pos = np.asarray(obs["position_ned_m"], dtype=float)
                 state = [pos[0] - start[0], pos[1] - start[1], pos[2] - start[2],
                          (float(obs["yaw_rad"]) - start_yaw + np.pi) % (2 * np.pi) - np.pi]
-                observation = {"rgb": obs.get("rgb"), "state": state, "position_ned_m": pos.tolist(),
-                               "yaw_rad": float(obs["yaw_rad"])}
+                if trajectory:
+                    progress = float(evaluate_episode(episode, trajectory, dt_s=args.dt).subgoal_completion)
+                observation = {"rgb": obs.get("rgb"), "state": state, "progress": progress,
+                               "position_ned_m": pos.tolist(), "yaw_rad": float(obs["yaw_rad"])}
                 result = policy.act(observation, episode["instruction"])
                 actions = np.asarray(result.get("actions", []), dtype=float)
                 if actions.ndim == 1:
@@ -80,7 +83,8 @@ def run(args: argparse.Namespace) -> dict:
                     trajectory.append({**obs, **info, "action": a.tolist()})
                     log.write(json.dumps({
                         "episode_id": episode["episode_id"], "step": step, "action": a.tolist(),
-                        "state": state, "tokens": result.get("tokens"), "logprobs": result.get("logprobs"),
+                        "state": state, "progress": progress,
+                        "tokens": result.get("tokens"), "logprobs": result.get("logprobs"),
                         "latency_ms": result.get("policy_latency_ms"), "info": info,
                     }) + "\n")
                     if info.get("collision"):
