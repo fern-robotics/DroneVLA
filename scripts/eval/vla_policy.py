@@ -65,7 +65,7 @@ class WebsocketPolicy:
 class HttpPolicy:
     """Generic HTTP JSON policy server.
 
-    Request: {"image_png_b64", "state", "instruction"}.
+    Request: {"image_png_b64", "state", "progress", "instruction"}.
     Response: {"actions": [[dx,dy,dz,dyaw], ...], "tokens": [...], "logprobs": [...]}.
     """
 
@@ -86,6 +86,7 @@ class HttpPolicy:
         payload = json.dumps({
             "image_png_b64": base64.b64encode(buf.getvalue()).decode(),
             "state": [float(v) for v in observation.get("state", [0, 0, 0, 0])],
+            "progress": float(observation.get("progress", 0.0)),
             "instruction": instruction,
         }).encode()
         req = self._request(self.url, data=payload, headers={"Content-Type": "application/json"})
