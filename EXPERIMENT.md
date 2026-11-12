@@ -131,7 +131,7 @@ Report success with Wilson intervals and intent score with bootstrap intervals. 
 
 ### Critical dependency
 
-The PyTorch RL core is tested (GRPO/PPO losses, GAE, rollout collection), and the π₀ JAX loss/update core plus teacher-forced token scorer are implemented. The OpenPI **nnx** optimizer loop is still the missing integration. Before a 100-group run, each model adapter must pass a 5-group smoke test that produces valid token log-probabilities, reference KL, advantages and a saved checkpoint.
+The PyTorch RL core is tested (GRPO/PPO losses, GAE, rollout collection). For π₀, the JAX GRPO/PPO losses, teacher-forced FAST token scorer, NNX optimizer wrapper, and batched NNX loss adapter are implemented and tested. The remaining integration is loading the actual OpenPI checkpoint into a trainable LoRA NNX model and running rollout batches through it. Before a 100-group run, each model adapter must pass a 5-group smoke test that produces valid token log-probabilities, reference KL, advantages and a saved checkpoint.
 
 ---
 
