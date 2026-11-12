@@ -75,7 +75,7 @@ Both models use the same episodes and sample budget, not the same optimizer-step
 
 ## Current gaps
 
-- OpenPI nnx GRPO/PPO optimizer loop not wired.
+- OpenPI nnx update/loss adapters are wired and CPU-tested; the checkpoint-loading + rollout loop on GPU is still pending.
 - π₀-FAST UAV full SFT/RL not run.
 - M1/M2/SFT+/PPO matrix not run.
 - Real-policy video exists for the third-party OpenVLA-UAV checkpoint, not for thesis M1.
