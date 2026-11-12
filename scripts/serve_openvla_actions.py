@@ -24,6 +24,7 @@ from typing import Any
 import numpy as np
 import torch
 from PIL import Image
+from integrations.openvla.prompt import build_uav_prompt
 
 
 def load_model(vla_path: str, device: str):
@@ -69,7 +70,11 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         request = json.loads(self.rfile.read(length))
         image = Image.open(io.BytesIO(base64.b64decode(request["image_png_b64"]))).convert("RGB")
-        prompt = f"In: What action should the robot take to {request['instruction'].lower()}?\nOut:"
+        prompt = build_uav_prompt(
+            request["instruction"],
+            request.get("state"),
+            request.get("progress", 0),
+        )
         inputs = self.processor(prompt, image).to(self.device, dtype=torch.bfloat16)
         input_ids = inputs["input_ids"]
         if int(input_ids[0, -1]) != 29871:

@@ -5,16 +5,24 @@ from typing import Any
 
 import torch
 
+from integrations.openvla.prompt import build_uav_prompt
+
 from .causal import VLMContext
 
 
-def build_openvla_context(processor: Any, image: Any, instruction: str) -> VLMContext:
+def build_openvla_context(
+    processor: Any,
+    image: Any,
+    instruction: str,
+    state: Any = None,
+    progress: Any = None,
+) -> VLMContext:
     """Build a VLMContext for an OpenVLA-style processor.
 
     The prompt format matches the official OpenVLA inference path. The action
     tokens are appended after the prompt by the trainer.
     """
-    prompt = f"In: What action should the robot take to {instruction.lower()}?\nOut:"
+    prompt = build_uav_prompt(instruction, state, progress)
     inputs = processor(prompt, image)
     input_ids = inputs["input_ids"]
     if input_ids.ndim == 2:
