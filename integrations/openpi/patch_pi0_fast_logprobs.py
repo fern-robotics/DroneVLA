@@ -51,9 +51,34 @@ def patch_model(path: Path) -> None:
         "        eos_mask = output_tokens != PALIGEMMA_EOS_TOKEN\n"
         "        return output_tokens, output_logprobs, eos_mask",
     )
+    scorer = """    def score_token_logprobs(
+        self, rng: at.KeyArrayLike, observation: _model.Observation
+    ) -> tuple[at.Float[at.Array, "b s"], at.Bool[at.Array, "b s"]]:
+        \"\"\"Teacher-forced log-probabilities for prompt+action tokens.\"\"\"
+        observation = _model.preprocess_observation(
+            None, observation, train=False, image_keys=list(observation.images.keys())
+        )
+        input_token_embeddings, input_mask, ar_mask = self.embed_inputs(observation)
+        attn_mask = make_attn_mask(input_mask, ar_mask)
+        targets = jax.nn.one_hot(
+            observation.tokenized_prompt[:, 1:], self.PaliGemma.llm.module.vocab_size
+        )
+        pre_logits, _, _ = self.PaliGemma.llm(
+            embedded_prefix=input_token_embeddings[:, :-1],
+            mask=attn_mask[:, :-1, :-1],
+            return_prelogits=True,
+        )
+        logits, _ = self.PaliGemma.llm(pre_logits=pre_logits[:, -targets.shape[1] :])
+        logp = jax.nn.log_softmax(logits, axis=-1)
+        token_logp = jnp.sum(targets * logp, axis=-1)
+        assert observation.token_loss_mask is not None, "Token loss mask is required"
+        return token_logp, observation.token_loss_mask[:, 1:]
+
+"""
+    if "score_token_logprobs" not in s:
+        s = s.replace("    @override\n    def sample_actions(", scorer + "    @override\n    def sample_actions(", 1)
     path.write_text(s)
     print("patched", path)
-
 
 def patch_policy(path: Path) -> None:
     s = path.read_text()
