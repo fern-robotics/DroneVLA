@@ -14,6 +14,25 @@ def _pose(airsim: Any, position: Iterable[float], yaw: float = 0.0) -> Any:
     return airsim.Pose(airsim.Vector3r(x, y, z), airsim.to_quaternion(0.0, 0.0, float(yaw)))
 
 
+MATERIALS = {
+    "red": "/Game/StarterContent/Materials/M_Red",
+    "blue": "/Game/StarterContent/Materials/M_Blue",
+    "green": "/Game/StarterContent/Materials/M_Green",
+}
+
+
+def apply_marker_material(client: Any, name: str, color: str) -> bool:
+    """Assign a colored material if the AirSim scene exposes one."""
+    material = MATERIALS.get(str(color).lower())
+    if material is None or not hasattr(client, "simSetObjectMaterial"):
+        return False
+    try:
+        client.simSetObjectMaterial(name, material)
+        return True
+    except Exception:
+        return False
+
+
 def ensure_markers(client: Any, airsim: Any, markers: list[dict[str, Any]], prefix: str = "dronevl_marker") -> list[str]:
     """Spawn or move marker cubes; returns the object names."""
     existing = set()
@@ -31,6 +50,7 @@ def ensure_markers(client: Any, airsim: Any, markers: list[dict[str, Any]], pref
             client.simSetObjectPose(name, pose, teleport=True)
         else:
             client.simSpawnObject(name, marker.get("asset", "Cube"), pose, airsim.Vector3r(*[float(v) for v in scale]), False)
+        apply_marker_material(client, name, marker.get("color", ""))
     return names
 
 

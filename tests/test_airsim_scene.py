@@ -16,20 +16,22 @@ class FakeAirsim:
 
 
 class FakeClient:
-    def __init__(self): self.objects = {}; self.spawned = []; self.destroyed = []
+    def __init__(self): self.objects = {}; self.spawned = []; self.destroyed = []; self.materials = []
     def simListSceneObjects(self, regex): return list(self.objects)
     def simSpawnObject(self, name, asset, pose, scale, physics):
         self.objects[name] = (asset, pose, scale); self.spawned.append(name)
     def simSetObjectPose(self, name, pose, teleport=True): self.objects[name] = pose
     def simDestroyObject(self, name): self.destroyed.append(name); self.objects.pop(name, None)
+    def simSetObjectMaterial(self, name, material): self.materials.append((name, material))
 
 
 class AirSimSceneTest(unittest.TestCase):
     def test_spawn_move_clear(self):
         c = FakeClient(); a = FakeAirsim()
-        markers = [{"marker_id": "C", "position_ned_m": [10, 0, -10], "scale": [0.2, 1.5, 1.5]}]
+        markers = [{"marker_id": "C", "color": "red", "position_ned_m": [10, 0, -10], "scale": [0.2, 1.5, 1.5]}]
         names = ensure_markers(c, a, markers)
         self.assertEqual(names, ["dronevl_marker_C"])
+        self.assertEqual(c.materials, [("dronevl_marker_C", "/Game/StarterContent/Materials/M_Red")])
         self.assertEqual(c.spawned, names)
         ensure_markers(c, a, [{"marker_id": "C", "position_ned_m": [12, 0, -10]}])
         self.assertEqual(c.spawned, ["dronevl_marker_C"])
