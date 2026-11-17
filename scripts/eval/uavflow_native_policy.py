@@ -81,6 +81,9 @@ def main() -> None:
         u.unrealcv.set_cam(cam, [world[0], world[1], world[2] + 60], [0, init[4] + math.degrees(yaw), 0])
         rec = {"step": step, "local_xyz": pos, "yaw": yaw,
                "world_xyz": world, "action": a,
+               "vla_actions": actions,
+               "tokens": result.get("tokens"),
+               "logprobs": result.get("logprobs"),
                "latency_ms": (time.time() - t0) * 1000}
         if target is not None:
             dx_t = 0.01 * (world[0] - target[0])

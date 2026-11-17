@@ -81,16 +81,28 @@ class Handler(BaseHTTPRequestHandler):
             s4 = [round(float(v), 1) for v in list(state)[:4]]
             prompt = f"In: Current State: {','.join(map(str, s4))}, What action should the uav take to {request['instruction']}?\nOut:"
             inputs = self.processor(prompt, image).to(self.device, dtype=torch.bfloat16)
+            input_ids = inputs["input_ids"]
+            if int(input_ids[0, -1]) != 29871:
+                input_ids = torch.cat((input_ids, torch.tensor([[29871]], device=input_ids.device)), dim=1)
+            n = self.model.get_action_dim(self.unnorm_key)
             with self.lock, torch.no_grad():
-                pred = self.model.predict_action(**inputs, unnorm_key=self.unnorm_key, do_sample=False)
-            arr = np.asarray(pred, dtype=float).reshape(-1)
-            actions = arr[:4]
+                generated = self.model.generate(
+                    input_ids=input_ids, pixel_values=inputs.get("pixel_values"),
+                    attention_mask=inputs.get("attention_mask"), max_new_tokens=n,
+                    output_scores=True, return_dict_in_generate=True, do_sample=False,
+                )
+            token_ids = generated.sequences[0, -n:].cpu().numpy()
+            logprobs = [float(torch.log_softmax(score[0], dim=-1)[int(tok)].item())
+                        for score, tok in zip(generated.scores, token_ids)]
+            actions = decode_actions(self.model, token_ids, self.unnorm_key)
             if self.absolute_output:
                 cy = np.deg2rad(float(s4[3]))
                 c, sn = np.cos(cy), np.sin(cy)
+                actions = np.asarray(actions[:4], dtype=float)
                 actions[:3] = np.asarray(s4[:3]) + np.array([c*actions[0]-sn*actions[1], sn*actions[0]+c*actions[1], actions[2]])
                 actions[3] = actions[3] + cy
-            body = json.dumps({"actions": [actions.tolist()], "tokens": None, "logprobs": None}).encode()
+            body = json.dumps({"actions": [np.asarray(actions[:4]).tolist()],
+                               "tokens": token_ids.tolist(), "logprobs": logprobs}).encode()
             self._send(body)
             return
         prompt = build_uav_prompt(

@@ -35,7 +35,10 @@ class Proxy:
         )
         with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
             result = json.loads(response.read())
-        return {"action": result.get("actions", []), "done": False}
+        return {"action": result.get("actions", []),
+                "tokens": result.get("tokens"),
+                "logprobs": result.get("logprobs"),
+                "done": False}
 
 
 def main() -> None:
