@@ -6,6 +6,7 @@ SCENE_ROOT="${SCENE_ROOT:-/workspace/unrealzoo}"
 OUT="${OUT:-/workspace/runs/uavflow_native}"
 SERVER_PORT="${SERVER_PORT:-5007}"
 MAX_STEPS="${MAX_STEPS:-100}"
+JSON_FOLDER="${JSON_FOLDER:-./test_jsons}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 DISPLAY_NUM="${DISPLAY_NUM:-:99}"
 mkdir -p "$OUT"
@@ -28,7 +29,7 @@ set +e
 timeout 1800 "$PYTHON_BIN" batch_run_act_all.py \
   --env_id UnrealTrack-DowntownWest-ContinuousColor-v0 \
   --server_port "$SERVER_PORT" \
-  --json_folder ./test_jsons \
+  --json_folder "$JSON_FOLDER" \
   --images_dir "$OUT/images" \
   --max_steps "$MAX_STEPS" > "$OUT/run.log" 2>&1
 STATUS=$?
