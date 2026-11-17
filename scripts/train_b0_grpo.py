@@ -44,45 +44,14 @@ def main() -> None:
     for group in groups:
         rewards = torch.tensor([r["reward"] for r in group["rollouts"]], dtype=torch.float32)
         adv = (rewards - rewards.mean()) / (rewards.std(unbiased=False) + 1e-6)
-        cur_rows, old_rows, adv_rows = [], [], []
-        for rollout, advantage in zip(group["rollouts"], adv):
-            rows = [json.loads(l) for l in (Path(rollout["dir"]) / "episode.jsonl").read_text().splitlines() if l.strip()]
-            task = json.load(open(group["task"]))
-            instruction = task["instruction"]
-            for r in rows:
-                tokens = r.get("tokens")
-                old = r.get("logprobs")
-                if not tokens or not old or len(tokens) != len(old):
-                    continue
-                img_path = Path(rollout["dir"]) / r["frame"]
-                image = Image.open(img_path).convert("RGB").resize((224, 224))
-                state = list(r["local_xyz"]) + [math.degrees(r["yaw"])]
-                inputs = processor(action_prompt(instruction, state), image)
-                ids = inputs["input_ids"]
-                if ids.ndim == 2:
-                    ids = ids[0]
-                ids = ids.to(dtype=torch.long)
-                toks = torch.tensor(tokens, dtype=torch.long)
-                prefix = ids.numel()
-                full = torch.cat([ids, toks[:-1]]).unsqueeze(0).to("cuda")
-                kwargs = {"input_ids": full}
-                if inputs.get("pixel_values") is not None:
-                    kwargs["pixel_values"] = inputs["pixel_values"].to("cuda", dtype=torch.bfloat16)
-                with torch.no_grad():
-                    logits = model(**kwargs).logits[0]
-                start = prefix - 1
-                selected = logits[start:start + toks.numel()]
-                cur = torch.log_softmax(selected, dim=-1).gather(-1, toks[:, None].to("cuda")).squeeze(-1)
-                cur_rows.append(cur)
-                old_rows.append(torch.tensor(old, dtype=torch.float32, device="cuda"))
-                adv_rows.append(torch.full_like(old_rows[-1], float(advantage)))
-        if not cur_rows:
-            continue
-        # Recompute with gradients per row (small smoke batch).
+        losses = []
         opt.zero_grad(set_to_none=True)
         loss_sum = 0.0
         for rollout, advantage in zip(group["rollouts"], adv):
-            rows = [json.loads(l) for l in (Path(rollout["dir"]) / "episode.jsonl").read_text().splitlines() if l.strip()]
+            ep = Path(rollout["dir"]) / "episode.jsonl"
+            if not ep.exists():
+                continue
+            rows = [json.loads(l) for l in ep.read_text().splitlines() if l.strip()]
             task = json.load(open(group["task"]))
             for r in rows:
                 tokens, old = r.get("tokens"), r.get("logprobs")
@@ -106,12 +75,14 @@ def main() -> None:
                 loss = grpo_loss(cur, old_t, torch.tensor([advantage], device="cuda"),
                                  mask, clip_range=0.2, beta=0.0).loss
                 loss_sum = loss_sum + loss
-        (loss_sum / max(1, len(cur_rows))).backward()
-        torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
+                losses.append(loss)
+        (loss_sum / max(1, len(losses))).backward()
+        grad_norm = torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
         opt.step()
         updates += 1
-        total_loss += float(loss_sum.detach()) / max(1, len(cur_rows))
-        print("update", updates, "loss", float(loss_sum.detach()) / max(1, len(cur_rows)), flush=True)
+        mean_loss = float(loss_sum.detach()) / max(1, len(losses))
+        total_loss += mean_loss
+        print("update", updates, "loss", mean_loss, "grad_norm", float(grad_norm), "rows", len(losses), flush=True)
     Path(args.out).mkdir(parents=True, exist_ok=True)
     model.save_pretrained(args.out)
     print(json.dumps({"updates": updates, "mean_loss": total_loss / max(1, updates)}))
