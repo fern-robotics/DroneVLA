@@ -20,6 +20,7 @@ def main() -> None:
     ap.add_argument("--action-scale", type=float, default=1.0, help="1.0 for native cm actions, 100.0 for metre-delta checkpoints")
     ap.add_argument("--action-mode", choices=["delta", "absolute"], default="delta")
     ap.add_argument("--state-format", choices=["4", "6"], default="6")
+    ap.add_argument("--save-frames", action="store_true")
     args = ap.parse_args()
     task = json.load(open(args.task))
     p = task["initial_pos"]
@@ -41,6 +42,9 @@ def main() -> None:
     pos = [0.0, 0.0, 0.0]  # local to initial
     yaw = 0.0
     writer = None
+    if args.save_frames:
+        import os
+        os.makedirs(args.out + "/frames", exist_ok=True)
     log = open(args.out + "/episode.jsonl", "w")
     for step in range(args.max_steps):
         img = u.unrealcv.get_image(cam, "lit")
@@ -48,6 +52,10 @@ def main() -> None:
             h, w = img.shape[:2]
             writer = cv2.VideoWriter(args.out + "/native_2k.mp4", cv2.VideoWriter_fourcc(*"mp4v"), 10, (w, h))
         writer.write(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        frame_rel = None
+        if args.save_frames:
+            frame_rel = f"frames/{step:04d}.jpg"
+            cv2.imwrite(args.out + "/" + frame_rel, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         buf = io.BytesIO(); Image.fromarray(img).save(buf, format="PNG")
         if args.state_format == "4":
             state = [pos[0], pos[1], pos[2], math.degrees(yaw)]
@@ -82,6 +90,7 @@ def main() -> None:
         rec = {"step": step, "local_xyz": pos, "yaw": yaw,
                "world_xyz": world, "action": a,
                "vla_actions": actions,
+               "frame": frame_rel,
                "tokens": result.get("tokens"),
                "logprobs": result.get("logprobs"),
                "latency_ms": (time.time() - t0) * 1000}
@@ -95,6 +104,10 @@ def main() -> None:
     log.close()
     if writer is not None:
         writer.release()
+    try:
+        env.close()
+    except Exception:
+        pass
     print(json.dumps({"steps": args.max_steps, "final_local": pos, "yaw": yaw}))
 
 
