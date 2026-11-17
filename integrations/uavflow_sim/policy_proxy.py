@@ -18,6 +18,12 @@ class Proxy:
 
     def predict(self, payload: dict) -> dict:
         image = base64.b64decode(payload["image"])
+        from PIL import Image
+        import io as _io
+        _im = Image.open(_io.BytesIO(image)).convert("RGB")
+        if _im.size != (224, 224):
+            _im = _im.resize((224, 224))
+            _buf = _io.BytesIO(); _im.save(_buf, format="PNG"); image = _buf.getvalue()
         body = json.dumps({
             "image_png_b64": base64.b64encode(image).decode(),
             "state": payload.get("proprio", [0, 0, 0, 0, 0, 0]),
