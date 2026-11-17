@@ -18,7 +18,9 @@ def main() -> None:
     u.agents_category = ["drone"]
     if not u.launched:
         u.launched = u.launch_ue_env()
-    player = u.player_list[0]
+    u.unrealcv.set_viewport(u.player_list[0])
+    player = next((p for p in u.player_list if "Drone" in p), u.player_list[0])
+    cam = u.cam_list[u.player_list.index(player)]
     cam = 0
     p = task["initial_pos"]
     u.unrealcv.set_obj_location(player, p[:3])

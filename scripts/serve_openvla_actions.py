@@ -65,6 +65,8 @@ class Handler(BaseHTTPRequestHandler):
     model = None
     device = "cuda"
     unnorm_key = "uav_flow_sim"
+    prompt_style = "dronevl"
+    absolute_output = False
     lock = threading.Lock()
 
     def log_message(self, *args):
@@ -74,6 +76,23 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         request = json.loads(self.rfile.read(length))
         image = Image.open(io.BytesIO(base64.b64decode(request["image_png_b64"]))).convert("RGB")
+        state = request.get("state", [0, 0, 0, 0])
+        if self.prompt_style == "openvla_uav":
+            s4 = [round(float(v), 1) for v in list(state)[:4]]
+            prompt = f"In: Current State: {','.join(map(str, s4))}, What action should the uav take to {request['instruction']}?\nOut:"
+            inputs = self.processor(prompt, image).to(self.device, dtype=torch.bfloat16)
+            with self.lock, torch.no_grad():
+                pred = self.model.predict_action(**inputs, unnorm_key=self.unnorm_key, do_sample=False)
+            arr = np.asarray(pred, dtype=float).reshape(-1)
+            actions = arr[:4]
+            if self.absolute_output:
+                cy = np.deg2rad(float(s4[3]))
+                c, sn = np.cos(cy), np.sin(cy)
+                actions[:3] = np.asarray(s4[:3]) + np.array([c*actions[0]-sn*actions[1], sn*actions[0]+c*actions[1], actions[2]])
+                actions[3] = actions[3] + cy
+            body = json.dumps({"actions": [actions.tolist()], "tokens": None, "logprobs": None}).encode()
+            self._send(body)
+            return
         prompt = build_uav_prompt(
             request["instruction"],
             request.get("state"),
@@ -111,6 +130,13 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send(self, body: bytes) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -121,15 +147,21 @@ def main() -> None:
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--norm-stats", default="", help="JSON action stats for the calibrated M0 decoder")
     ap.add_argument("--adapter", default="", help="LoRA adapter directory")
+    ap.add_argument("--prompt-style", choices=["dronevl", "openvla_uav"], default="dronevl")
+    ap.add_argument("--absolute-output", action="store_true", help="OpenVLA-UAV native local pose output")
     args = ap.parse_args()
     Handler.processor, Handler.model = load_model(args.vla_path, args.device, args.adapter)
     Handler.device = args.device
     Handler.unnorm_key = args.unnorm_key
+    Handler.prompt_style = args.prompt_style
+    Handler.absolute_output = args.absolute_output
     if args.norm_stats:
         stats = json.loads(Path(args.norm_stats).read_text())
         Handler.model.norm_stats[args.unnorm_key] = stats
         print(f"loaded M0 norm stats {args.norm_stats} -> {args.unnorm_key}", flush=True)
     Handler.unnorm_key = args.unnorm_key
+    Handler.prompt_style = args.prompt_style
+    Handler.absolute_output = args.absolute_output
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"serving OpenVLA on {args.host}:{args.port}", flush=True)
     server.serve_forever()
