@@ -1,21 +1,30 @@
-import os
+"""Patch a fresh OpenPI checkout with the DroneVL UAV data config.
+
+Run on the OpenPI repo before training/serving:
+    python integrations/openpi/patch_config.py /workspace/openpi
+"""
+from __future__ import annotations
+
+import sys
 from pathlib import Path
 
-p = Path("/workspace/openpi/src/openpi/training/config.py")
-s = p.read_text()
-if "import openpi.policies.uav_policy as uav_policy" not in s:
-    s = "import openpi.policies.uav_policy as uav_policy\n" + s
-if "\nimport os\n" not in "\n" + s:
+ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else "/workspace/openpi")
+PATH = ROOT / "src/openpi/training/config.py"
+s = PATH.read_text()
+
+if "import os" not in s.split("\n\n")[0]:
     s = "import os\n" + s
-if "uav_policy" in s:
-    print("already patched")
-    raise SystemExit(0)
-s = s.replace(
-    "from openpi.policies import policy_config as _policy_config",
-    "from openpi.policies import policy_config as _policy_config\nfrom openpi.policies import uav_policy",
-)
-marker = "@dataclasses.dataclass(frozen=True)\nclass TrainConfig:"
-block = '''@dataclasses.dataclass(frozen=True)
+if "import openpi.policies.uav_policy as uav_policy" not in s:
+    # Place after the last openpi import near the top.
+    anchor = "from openpi.policies import policy_config as _policy_config"
+    if anchor in s:
+        s = s.replace(anchor, anchor + "\nimport openpi.policies.uav_policy as uav_policy", 1)
+    else:
+        s = s.replace("import openpi.models.model as _model", "import openpi.models.model as _model\nimport openpi.policies.uav_policy as uav_policy", 1)
+
+if "class LeRobotUAVDataConfig" not in s:
+    marker = "@dataclasses.dataclass(frozen=True)\nclass TrainConfig:"
+    block = '''@dataclasses.dataclass(frozen=True)
 class LeRobotUAVDataConfig(DataConfigFactory):
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
@@ -46,8 +55,12 @@ class LeRobotUAVDataConfig(DataConfigFactory):
 
 @dataclasses.dataclass(frozen=True)
 class TrainConfig:'''
-s = s.replace(marker, block, 1)
-cfg = '''    TrainConfig(
+    if marker not in s:
+        raise SystemExit("TrainConfig marker not found")
+    s = s.replace(marker, block, 1)
+
+if 'name="pi0_fast_uav_low_mem"' not in s:
+    cfg = '''    TrainConfig(
         name="pi0_fast_uav_low_mem",
         model=pi0_fast.Pi0FASTConfig(
             action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b_lora"
@@ -69,8 +82,6 @@ cfg = '''    TrainConfig(
         ).get_freeze_filter(),
     ),
     TrainConfig(
-        # Full pi0-FAST base model, useful for serving/log-prob smoke tests
-        # before a LoRA UAV checkpoint exists.
         name="pi0_fast_uav_base",
         model=pi0_fast.Pi0FASTConfig(
             action_dim=4, action_horizon=10, max_token_len=180, paligemma_variant="gemma_2b"
@@ -87,8 +98,11 @@ cfg = '''    TrainConfig(
         ema_decay=None,
         wandb_enabled=False,
     ),
-]'''
-idx = s.rfind("\n]")
-s = s[:idx] + "\n" + cfg + s[idx + 2:]
-p.write_text(s)
-print("patched")
+'''
+    idx = s.rfind("\n]")
+    if idx < 0:
+        raise SystemExit("config list end not found")
+    s = s[:idx] + "\n" + cfg + "\n]" + s[idx + 2 :]
+
+PATH.write_text(s)
+print("patched", PATH)

@@ -74,7 +74,13 @@ def run(args: argparse.Namespace) -> dict:
                     progress = float(evaluate_episode(episode, trajectory, dt_s=args.dt).subgoal_completion)
                 observation = {"rgb": obs.get("rgb"), "state": state, "progress": progress,
                                "position_ned_m": pos.tolist(), "yaw_rad": float(obs["yaw_rad"])}
-                result = policy.act(observation, episode["instruction"])
+                if use_airsim:
+                    env.pause()
+                try:
+                    result = policy.act(observation, episode["instruction"])
+                finally:
+                    if use_airsim:
+                        env.resume()
                 actions = np.asarray(result.get("actions", []), dtype=float)
                 if actions.ndim == 1:
                     actions = actions[None, :]
@@ -84,6 +90,10 @@ def run(args: argparse.Namespace) -> dict:
                     log.write(json.dumps({
                         "episode_id": episode["episode_id"], "step": step, "action": a.tolist(),
                         "state": state, "progress": progress,
+                        "position_ned_m": [float(v) for v in pos],
+                        "position_after_ned_m": [float(v) for v in obs.get("position_ned_m", [])],
+                        "yaw_rad": float(obs.get("yaw_rad", 0.0)),
+                        "vla_actions": np.asarray(result.get("actions", []), dtype=float).tolist(),
                         "tokens": result.get("tokens"), "logprobs": result.get("logprobs"),
                         "latency_ms": result.get("policy_latency_ms"), "info": info,
                     }) + "\n")

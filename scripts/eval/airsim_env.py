@@ -269,6 +269,18 @@ class AirSimEnv:
         info["collision"] = self.last_collision
         return self.observe(capture_image=False), info
 
+    def pause(self) -> None:
+        try:
+            self.client.simPause(True)
+        except Exception:
+            pass
+
+    def resume(self) -> None:
+        try:
+            self.client.simPause(False)
+        except Exception:
+            pass
+
     # ------------------------------------------------------------------
     # RGB capture
     # ------------------------------------------------------------------

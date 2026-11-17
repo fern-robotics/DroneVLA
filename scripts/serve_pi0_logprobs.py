@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 import socket
+from pathlib import Path
 
 from openpi.policies import policy_config
 from openpi.serving.websocket_policy_server import WebsocketPolicyServer
@@ -22,13 +23,19 @@ def main() -> None:
     ap.add_argument("--dir", required=True, help="checkpoint directory")
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--host", default="0.0.0.0")
+    ap.add_argument("--norm-stats", default="", help="explicit norm_stats.json for the calibrated M0 decoder")
     args = ap.parse_args()
 
     train_config = _config.get_config(args.config)
+    norm_stats = None
+    if args.norm_stats:
+        from openpi.shared import normalize
+        norm_stats = normalize.deserialize_json(Path(args.norm_stats).read_text())
     policy = policy_config.create_trained_policy(
         train_config,
         args.dir,
         sample_kwargs={"return_logprobs": True},
+        norm_stats=norm_stats,
     )
     logging.info("serving pi0-FAST with token log-probs on %s:%s", args.host, args.port)
     server = WebsocketPolicyServer(policy=policy, host=args.host, port=args.port, metadata=policy.metadata)

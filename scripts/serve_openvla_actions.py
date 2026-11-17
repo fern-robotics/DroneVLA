@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import base64
 import io
+from pathlib import Path
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -27,7 +28,7 @@ from PIL import Image
 from integrations.openvla.prompt import build_uav_prompt
 
 
-def load_model(vla_path: str, device: str):
+def load_model(vla_path: str, device: str, adapter_path: str = ""):
     from prismatic.extern.hf.configuration_prismatic import OpenVLAConfig
     from prismatic.extern.hf.modeling_prismatic import OpenVLAForActionPrediction
     from prismatic.extern.hf.processing_prismatic import PrismaticImageProcessor, PrismaticProcessor
@@ -41,6 +42,9 @@ def load_model(vla_path: str, device: str):
     model = AutoModelForVision2Seq.from_pretrained(
         vla_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
     ).to(device)
+    if adapter_path:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, adapter_path)
     model.eval()
     return processor, model
 
@@ -82,8 +86,13 @@ class Handler(BaseHTTPRequestHandler):
         n = self.model.get_action_dim(self.unnorm_key)
         with self.lock, torch.no_grad():
             generated = self.model.generate(
-                input_ids=input_ids, max_new_tokens=n, output_scores=True,
-                return_dict_in_generate=True, do_sample=False,
+                input_ids=input_ids,
+                pixel_values=inputs.get("pixel_values"),
+                attention_mask=inputs.get("attention_mask"),
+                max_new_tokens=n,
+                output_scores=True,
+                return_dict_in_generate=True,
+                do_sample=False,
             )
         token_ids = generated.sequences[0, -n:].cpu().numpy()
         logprobs = []
@@ -110,9 +119,16 @@ def main() -> None:
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--norm-stats", default="", help="JSON action stats for the calibrated M0 decoder")
+    ap.add_argument("--adapter", default="", help="LoRA adapter directory")
     args = ap.parse_args()
-    Handler.processor, Handler.model = load_model(args.vla_path, args.device)
+    Handler.processor, Handler.model = load_model(args.vla_path, args.device, args.adapter)
     Handler.device = args.device
+    Handler.unnorm_key = args.unnorm_key
+    if args.norm_stats:
+        stats = json.loads(Path(args.norm_stats).read_text())
+        Handler.model.norm_stats[args.unnorm_key] = stats
+        print(f"loaded M0 norm stats {args.norm_stats} -> {args.unnorm_key}", flush=True)
     Handler.unnorm_key = args.unnorm_key
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"serving OpenVLA on {args.host}:{args.port}", flush=True)
