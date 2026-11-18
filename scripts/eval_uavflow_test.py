@@ -22,12 +22,21 @@ def dtw_ndtW(pred: np.ndarray, ref: np.ndarray) -> float:
     return float(math.exp(-cost[n, m] / (scale * max(n, m))))
 
 
+def horizon(task: dict, fallback: int, adaptive: bool) -> int:
+    if not adaptive:
+        return fallback
+    ref = task.get("reference_path_raw") or []
+    return min(400, max(50, int(math.ceil(1.5 * len(ref))))) if ref else fallback
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--test-dir", default="/workspace/UAV-Flow/UAV-Flow-Eval/test_jsons")
     ap.add_argument("--out", default="/workspace/runs/eval_b0_grpo_100")
     ap.add_argument("--workers", type=int, default=3)
-    ap.add_argument("--steps", type=int, default=20)
+    ap.add_argument("--steps", type=int, default=20, help="fallback if adaptive horizon is disabled")
+    ap.add_argument("--adaptive-steps", action="store_true", default=True)
+    ap.add_argument("--no-adaptive-steps", dest="adaptive_steps", action="store_false")
     ap.add_argument("--rollouts", type=int, default=3)
     ap.add_argument("--proxy", default="http://127.0.0.1:5007/predict")
     ap.add_argument("--retries", type=int, default=2)
@@ -46,8 +55,9 @@ def main() -> None:
         for k in range(args.rollouts):
             d = out / "runs" / tid / f"r{k}"; d.mkdir(parents=True, exist_ok=True)
             subprocess.run(["chown", "-R", "ue4:ue4", str(d)], check=False)
+            steps = horizon(task, args.steps, args.adaptive_steps)
             cmd = ["runuser", "-u", "ue4", "--", "env", "DISPLAY=:99", "UnrealEnv=/workspace/UnrealEnv",
-                   PYTHON, RUNNER, "--task", str(task_path), "--out", str(d), "--max-steps", str(args.steps),
+                   PYTHON, RUNNER, "--task", str(task_path), "--out", str(d), "--max-steps", str(steps),
                    "--image-cam", "0", "--action-mode", "absolute", "--state-format", "4", "--action-scale", "1.0",
                    "--proxy", args.proxy]
             for attempt in range(args.retries + 1):

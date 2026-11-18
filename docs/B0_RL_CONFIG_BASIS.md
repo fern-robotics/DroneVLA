@@ -39,3 +39,15 @@ Sources:
 - Value head uses the last prompt token hidden state as a proxy for the first action-token feature.
 - KL beta in GRPO uses the sampling policy as reference in the current trainer, not a separately frozen M0 copy.
 - Eval workers: 2, with two retries per task.
+
+## Evaluation horizon
+
+The fixed 20-step cap was removed. Both eval and rollout collection now use:
+
+```text
+max_steps_task = min(400, max(50, ceil(1.5 * len(reference_path_raw))))
+```
+
+This is not a paper hyperparameter; it is a reference-derived horizon that
+prevents truncating the median (~38-step) and long (~379-step) UAV-Flow tasks.
+`--no-adaptive-steps` restores the old fixed `--steps` behavior for smoke tests.

@@ -7,7 +7,8 @@ seed: 7
 sample_tasks: 100
 engines: 3
 group_size: 3
-max_steps: 20
+max_steps: adaptive
+max_steps_formula: "min(400, max(50, ceil(1.5 * len(reference_path_raw))))"
 contract:
   prompt_style: openvla_uav
   state: local_xyz_yaw_deg_cm
