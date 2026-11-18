@@ -1,0 +1,29 @@
+name: b0_grpo_full_pool
+base_checkpoint: /workspace/openvla-uav
+train_tasks: /workspace/uavflow_train_tasks
+test_tasks: /workspace/UAV-Flow/UAV-Flow-Eval/test_jsons
+manifest: /workspace/runs/b0_grpo_full/manifest.json
+seed: 7
+sample_tasks: 100
+group_size: 4
+max_steps: 20
+contract:
+  prompt_style: openvla_uav
+  state: local_xyz_yaw_deg_cm
+  action_mode: absolute
+  action_scale: 1.0
+reward:
+  reference_path: true
+  progress_weight: 2.0
+  cross_track_weight: 0.5
+  terminal_weight: 1.0
+grpo:
+  updates: 100
+  lr: 1.0e-5
+  clip_range: 0.2
+  beta: 0.0
+  lora_r: 32
+  lora_alpha: 64
+eval:
+  split: test
+  metrics: [success_rate, ndtw]
