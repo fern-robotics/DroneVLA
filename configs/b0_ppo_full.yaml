@@ -1,0 +1,28 @@
+name: b0_ppo_full_pool
+base_checkpoint: /workspace/openvla-uav
+train_tasks: /workspace/uavflow_train_tasks
+test_tasks: /workspace/UAV-Flow/UAV-Flow-Eval/test_jsons
+manifest: /workspace/runs/b0_ppo_100/manifest.json
+seed: 7
+sample_tasks: 100
+engines: 3
+group_size: 3
+max_steps: 10
+contract:
+  prompt_style: openvla_uav
+  state: local_xyz_yaw_deg_cm
+  action_mode: absolute
+  action_scale: 1.0
+ppo:
+  lr: 1.0e-5
+  clip: 0.2
+  gamma: 0.99
+  lam: 0.95
+  value_coef: 0.5
+  entropy_coef: 0.01
+  updates: 100
+eval:
+  split: test
+  workers: 3
+  rollouts_per_task: 1
+  metrics: [success_rate, ndtw]
