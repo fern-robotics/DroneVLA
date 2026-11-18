@@ -21,7 +21,11 @@ def action_prompt(instruction: str, state: list[float]) -> str:
 class ValueHead(torch.nn.Module):
     def __init__(self, hidden: int):
         super().__init__()
-        self.proj = torch.nn.Linear(hidden, 1)
+        self.proj = torch.nn.Sequential(
+            torch.nn.Linear(hidden, hidden // 2), torch.nn.GELU(),
+            torch.nn.Linear(hidden // 2, hidden // 4), torch.nn.GELU(),
+            torch.nn.Linear(hidden // 4, 1),
+        )
 
     def forward(self, h):
         return self.proj(h).squeeze(-1)
@@ -33,12 +37,13 @@ def main() -> None:
     ap.add_argument("--base", default="/workspace/openvla-uav")
     ap.add_argument("--out", default="/workspace/runs/b0_ppo")
     ap.add_argument("--max-groups", type=int, default=100)
-    ap.add_argument("--lr", type=float, default=1e-5)
-    ap.add_argument("--clip", type=float, default=0.2)
+    ap.add_argument("--lr", type=float, default=5e-6)
+    ap.add_argument("--clip-low", type=float, default=0.20)
+    ap.add_argument("--clip-high", type=float, default=0.28)
     ap.add_argument("--gamma", type=float, default=0.99)
     ap.add_argument("--lam", type=float, default=0.95)
     ap.add_argument("--value-coef", type=float, default=0.5)
-    ap.add_argument("--entropy-coef", type=float, default=0.01)
+    ap.add_argument("--entropy-coef", type=float, default=0.0)
     args = ap.parse_args()
     groups = json.load(open(args.groups))[: args.max_groups]
     processor = AutoProcessor.from_pretrained(args.base, trust_remote_code=True)
@@ -47,8 +52,8 @@ def main() -> None:
     ).to("cuda")
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
-    cfg = LoraConfig(r=32, lora_alpha=64, lora_dropout=0.0, bias="none",
-                     target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM")
+    cfg = LoraConfig(r=32, lora_alpha=16, lora_dropout=0.0, bias="none",
+                     target_modules="all-linear", task_type="CAUSAL_LM")
     model = get_peft_model(model, cfg)
     hidden = int(model.config.text_config.hidden_size)
     value_head = ValueHead(hidden).to("cuda")
@@ -117,8 +122,8 @@ def main() -> None:
         adv = torch.stack(all_adv)
         vals = torch.stack(all_val).reshape(-1); ret = torch.stack(all_ret).reshape(-1)
         loss = ppo_loss(cur, old, adv, mask, values=vals, returns=ret,
-                        clip_range=args.clip, value_coef=args.value_coef,
-                        entropy_coef=args.entropy_coef)
+                        clip_range=0.2, clip_low=args.clip_low, clip_high=args.clip_high,
+                        value_coef=args.value_coef, entropy_coef=args.entropy_coef)
         loss.loss.backward()
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()

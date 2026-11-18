@@ -5,7 +5,7 @@ test_tasks: /workspace/UAV-Flow/UAV-Flow-Eval/test_jsons
 manifest: /workspace/runs/b0_grpo_full/manifest.json
 seed: 7
 sample_tasks: 100
-group_size: 4
+group_size: 8
 max_steps: 20
 contract:
   prompt_style: openvla_uav
@@ -20,10 +20,14 @@ reward:
 grpo:
   updates: 100
   lr: 1.0e-5
-  clip_range: 0.2
-  beta: 0.0
+  clip_low: 0.20
+  clip_high: 0.28
+  beta: 0.01
   lora_r: 32
-  lora_alpha: 64
+  lora_alpha: 16
+  lora_target: all-linear
 eval:
   split: test
+  workers: 2
+  rollouts_per_task: 1
   metrics: [success_rate, ndtw]

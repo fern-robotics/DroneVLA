@@ -25,6 +25,9 @@ def main() -> None:
     ap.add_argument("--out", default="/workspace/runs/b0_grpo")
     ap.add_argument("--max-groups", type=int, default=1)
     ap.add_argument("--lr", type=float, default=1e-5)
+    ap.add_argument("--beta", type=float, default=0.01)
+    ap.add_argument("--clip-low", type=float, default=0.20)
+    ap.add_argument("--clip-high", type=float, default=0.28)
     args = ap.parse_args()
     groups = json.load(open(args.groups))[: args.max_groups]
     processor = AutoProcessor.from_pretrained(args.base, trust_remote_code=True)
@@ -34,8 +37,8 @@ def main() -> None:
     model.gradient_checkpointing_enable()
     if hasattr(model, "enable_input_require_grads"):
         model.enable_input_require_grads()
-    cfg = LoraConfig(r=32, lora_alpha=64, lora_dropout=0.0, bias="none",
-                     target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM")
+    cfg = LoraConfig(r=32, lora_alpha=16, lora_dropout=0.0, bias="none",
+                     target_modules="all-linear", task_type="CAUSAL_LM")
     model = get_peft_model(model, cfg)
     model.train()
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr)
@@ -73,7 +76,9 @@ def main() -> None:
                 old_t = torch.tensor(old, dtype=torch.float32, device="cuda").unsqueeze(0)
                 mask = torch.ones_like(cur)
                 loss = grpo_loss(cur, old_t, torch.tensor([advantage], device="cuda"),
-                                 mask, clip_range=0.2, beta=0.0).loss
+                                 mask, clip_range=0.2,
+                                 clip_low=args.clip_low, clip_high=args.clip_high,
+                                 beta=args.beta).loss
                 loss_sum = loss_sum + loss
                 losses.append(loss)
         (loss_sum / max(1, len(losses))).backward()

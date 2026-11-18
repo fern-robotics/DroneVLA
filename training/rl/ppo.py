@@ -37,6 +37,8 @@ def ppo_loss(
     old_values: torch.Tensor | None = None,
     value_mask: torch.Tensor | None = None,
     clip_range: float = 0.2,
+    clip_low: float | None = None,
+    clip_high: float | None = None,
     value_clip_range: float | None = None,
     value_coef: float = 0.5,
     entropy_coef: float = 0.01,
@@ -61,8 +63,12 @@ def ppo_loss(
     Returns:
         :class:`PpoLoss`; ``.loss`` is the scalar tensor to backpropagate.
     """
-    if clip_range < 0.0:
-        raise ValueError("clip_range must be non-negative")
+    if isinstance(clip_range, (tuple, list)):
+        clip_low, clip_high = float(clip_range[0]), float(clip_range[1])
+    low = float(clip_range if clip_low is None else clip_low)
+    high = float(clip_range if clip_high is None else clip_high)
+    if low < 0.0 or high < 0.0:
+        raise ValueError("clip range must be non-negative")
     if value_coef < 0.0 or entropy_coef < 0.0:
         raise ValueError("value_coef and entropy_coef must be non-negative")
 
@@ -72,7 +78,7 @@ def ppo_loss(
     mask = (_align_like(response_mask, current, "response_mask") > 0).to(current.dtype)
 
     ratio = torch.exp(torch.clamp(current - old, min=-20.0, max=20.0))
-    clipped_ratio = torch.clamp(ratio, 1.0 - clip_range, 1.0 + clip_range)
+    clipped_ratio = torch.clamp(ratio, 1.0 - low, 1.0 + high)
     surrogate = torch.minimum(ratio * advantage, clipped_ratio * advantage)
     policy_loss = -(surrogate * mask).sum() / mask.sum().clamp_min(1.0)
 
