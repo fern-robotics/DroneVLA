@@ -62,7 +62,8 @@ def main() -> None:
                    "--proxy", args.proxy]
             for attempt in range(args.retries + 1):
                 with (d / "runner.log").open("w") as f:
-                    subprocess.run(cmd, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT, timeout=120)
+                    subprocess.run(cmd, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=f,
+                                   stderr=subprocess.STDOUT, timeout=max(300, 4 * steps))
                 if (d / "episode.jsonl").exists():
                     break
                 # Kill only this task's runner/engine; other workers are untouched.
@@ -77,7 +78,8 @@ def main() -> None:
                          "ndtW": dtw_ndtW(pred, ref), "success": bool(final_m < 2.0), "dir": str(d)})
         return {"task": tid, "rollouts": runs,
                 "success": float(np.mean([r["success"] for r in runs])),
-                "pass_at_3": bool(any(r["success"] for r in runs)),
+                "pass_at_k": bool(any(r["success"] for r in runs)),
+                "k": args.rollouts,
                 "final_target_m": float(np.mean([r["final_target_m"] for r in runs])),
                 "ndtW": float(np.mean([r["ndtW"] for r in runs]))}
 
@@ -95,7 +97,8 @@ def main() -> None:
     all_results = [json.loads(p.read_text()) for p in (out / "results").glob("*.json")]
     summary = {"tasks": len(all_results),
                "success_rate": float(np.mean([r["success"] for r in all_results])) if all_results else 0.0,
-               "pass_at_3": float(np.mean([r.get("pass_at_3", False) for r in all_results])) if all_results else 0.0,
+               "pass_at_k": float(np.mean([r.get("pass_at_k", False) for r in all_results])) if all_results else 0.0,
+               "k": args.rollouts,
                "mean_ndtW": float(np.mean([r["ndtW"] for r in all_results])) if all_results else 0.0,
                "mean_final_target_m": float(np.mean([r["final_target_m"] for r in all_results])) if all_results else 0.0}
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
