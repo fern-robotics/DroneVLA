@@ -1,0 +1,15 @@
+scene_dir: /workspace/UnrealEnv/Collection_v4_LinuxNoEditor
+binary: Collection/Binaries/Linux/Collection
+map: DowntownWest
+display: ":99"
+resolution: [160, 160]
+camera: 0
+render_backend: vulkan
+gpu_id: 0
+unrealcv_base_port: 9000
+max_parallel_engines: 4
+launch_stagger_s: 10
+notes: |
+  The UnrealCV launcher auto-selects a free port starting at 9000.
+  NVIDIA Vulkan rendering requires a matching nvidia_icd.json; without it the
+  engine falls back to llvmpipe (CPU), while OpenVLA still uses the GPU.

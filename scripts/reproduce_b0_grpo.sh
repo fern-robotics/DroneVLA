@@ -13,7 +13,7 @@ mkdir -p "$RUN"
 while read -r task; do
   id=$(basename "$task" .json)
   "$PY" "$ROOT/scripts/collect_uavflow_groups.py" --task "$task" \
-    --out "$RUN/$id" --groups 1 --group-size 4 --steps 20
+    --out "$RUN/$id" --groups 1 --group-size 4 --steps 20 < /dev/null
 done < <("$PY" -c "import json;print('\\n'.join(json.load(open('$RUN/manifest.json'))['tasks']))")
 "$PY" "$ROOT/scripts/aggregate_uavflow_groups.py" --run "$RUN" --manifest "$RUN/manifest.json" --out "$RUN/groups.json"
 "$PY" "$ROOT/scripts/train_b0_grpo.py" --groups "$RUN/groups.json" --out "$RUN/adapter" --max-groups 100
