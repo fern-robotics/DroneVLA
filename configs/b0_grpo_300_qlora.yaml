@@ -1,0 +1,38 @@
+name: b0_grpo_300_qlora
+base_checkpoint: /workspace/openvla-uav
+train_tasks: /workspace/uavflow_train_tasks
+sample_tasks: 300
+sample_stratified: true
+seed: 7
+group_size: 8
+engines: 4
+collection_waves: 2
+max_steps: adaptive
+max_steps_formula: "min(400, max(50, ceil(1.5 * len(reference_path_raw))))"
+qlora:
+  load_in_4bit: true
+  quant_type: nf4
+  double_quant: true
+  compute_dtype: bfloat16
+  gradient_checkpointing: true
+lora:
+  r: 32
+  alpha: 16
+  dropout: 0.0
+  target: all-linear
+grpo:
+  updates: 300
+  lr: 1.0e-5
+  clip_low: 0.20
+  clip_high: 0.28
+  beta: 0.01
+reward:
+  progress: 2.0
+  cross_track: 0.5
+  terminal: 1.0
+eval:
+  tasks: fixed_244_prefix
+  adaptive_steps: true
+  workers: 2
+  retries: 2
+  rollouts_per_task: 1
