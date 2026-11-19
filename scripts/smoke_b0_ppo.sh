@@ -2,7 +2,7 @@
 set -euo pipefail
 PY=${PY:-/workspace/venv311/bin/python}
 ROOT=${ROOT:-/workspace/DroneVLA-uavflow}
-PID=$(ss -ltnp 2>/dev/null | awk '/:8000/ {match($0,/pid=([0-9]+)/,a); print a[1]; exit}')
+PID=$(ss -ltnp 2>/dev/null | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | head -1)
 [ -n "$PID" ] && kill "$PID" 2>/dev/null || true
 sleep 3
 cd "$ROOT"

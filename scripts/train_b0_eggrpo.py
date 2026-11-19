@@ -30,12 +30,23 @@ def main() -> None:
     ap.add_argument("--clip-high", type=float, default=0.28)
     ap.add_argument("--expert-cache", default="/workspace/runs/b0_eggrpo/expert_cache")
     ap.add_argument("--expert-reward", type=float, default=2.0)
+    ap.add_argument("--qlora", action="store_true", default=True)
+    ap.add_argument("--no-qlora", dest="qlora", action="store_false")
     args = ap.parse_args()
     groups = json.load(open(args.groups))[: args.max_groups]
     processor = AutoProcessor.from_pretrained(args.base, trust_remote_code=True)
-    model = AutoModelForVision2Seq.from_pretrained(
-        args.base, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
-    ).to("cuda")
+    if args.qlora:
+        bnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                                 bnb_4bit_use_double_quant=True,
+                                 bnb_4bit_compute_dtype=torch.bfloat16)
+        model = AutoModelForVision2Seq.from_pretrained(
+            args.base, quantization_config=bnb, device_map="auto",
+            low_cpu_mem_usage=True, trust_remote_code=True)
+        model = prepare_model_for_kbit_training(model)
+    else:
+        model = AutoModelForVision2Seq.from_pretrained(
+            args.base, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
+        ).to("cuda")
     model.gradient_checkpointing_enable()
     if hasattr(model, "enable_input_require_grads"):
         model.enable_input_require_grads()

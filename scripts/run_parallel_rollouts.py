@@ -31,7 +31,7 @@ def main() -> None:
         cmd = prefix + [PYTHON, RUNNER, "--task", args.task, "--out", str(d),
                         "--max-steps", str(args.steps), "--image-cam", "0",
                         "--action-mode", "absolute", "--state-format", "4",
-                        "--action-scale", "1.0"]
+                        "--action-scale", "1.0", "--save-frames"]
         log = (d / "runner.log").open("w")
         procs.append((i, subprocess.Popen(cmd, cwd=ROOT, stdin=subprocess.DEVNULL,
                                           stdout=log, stderr=subprocess.STDOUT), log))
