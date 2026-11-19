@@ -1,0 +1,36 @@
+name: b0_grpo_244eval
+base_checkpoint: /workspace/openvla-uav
+train_tasks: /workspace/uavflow_train_tasks
+test_tasks: /workspace/UAV-Flow/UAV-Flow-Eval/test_jsons
+test_manifest: /workspace/runs/b0_grpo_244/manifest_244.json
+seed: 7
+sample_tasks: 100
+group_size: 3          # 3 stable native engines on this pod
+max_steps: adaptive
+max_steps_formula: "min(400, max(50, ceil(1.5 * len(reference_path_raw))))"
+contract:
+  prompt_style: openvla_uav
+  state: local_xyz_yaw_deg_cm
+  action_mode: absolute
+  action_scale: 1.0
+reward:
+  reference_path: true
+  progress_weight: 2.0
+  cross_track_weight: 0.5
+  terminal_weight: 1.0
+grpo:
+  updates: 100
+  lr: 1.0e-5
+  clip_low: 0.20
+  clip_high: 0.28
+  beta: 0.01
+  lora_r: 32
+  lora_alpha: 16
+  lora_target: all-linear
+eval:
+  split: fixed_244
+  workers: 2
+  retries: 2
+  rollouts_per_task: 1
+  success_threshold_m: 2.0
+  metrics: [success_rate, ndtw]
