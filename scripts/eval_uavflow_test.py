@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Evaluate a served B0/GRPO policy on the 273 held-out UAV-Flow test tasks."""
 from __future__ import annotations
-import argparse, json, math, subprocess, time
+import argparse, json, math, random, subprocess, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import numpy as np
@@ -41,9 +41,13 @@ def main() -> None:
     ap.add_argument("--proxy", default="http://127.0.0.1:5007/predict")
     ap.add_argument("--retries", type=int, default=2)
     ap.add_argument("--retry-delay", type=float, default=3.0)
+    ap.add_argument("--limit", type=int, default=0, help="0 = all test tasks")
+    ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     tasks = sorted(Path(args.test_dir).glob("*.json"))
+    if args.limit and args.limit < len(tasks):
+        tasks = sorted(random.Random(args.seed).sample(tasks, args.limit))
     done = {p.stem for p in (out / "results").glob("*.json")} if (out / "results").exists() else set()
 
     def run(task_path: Path) -> dict:

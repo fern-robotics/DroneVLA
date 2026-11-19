@@ -29,6 +29,7 @@ grpo:
   lora_target: all-linear
 eval:
   split: test
+  limit: 200
   workers: 2
   rollouts_per_task: 1
   metrics: [success_rate, ndtw]

@@ -30,6 +30,7 @@ ppo:
   value_head: first_action_token_3layer
 eval:
   split: test
+  limit: 200
   workers: 2
   rollouts_per_task: 1
   metrics: [success_rate, ndtw]
