@@ -16,6 +16,7 @@ def main() -> None:
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--waves", type=int, default=1)
     ap.add_argument("--steps", type=int, default=10)
     ap.add_argument("--adaptive-steps", action="store_true", default=True)
     ap.add_argument("--no-adaptive-steps", dest="adaptive_steps", action="store_false")
@@ -33,21 +34,22 @@ def main() -> None:
         task = json.loads(Path(task_path).read_text())
         ref = task.get("reference_path_raw") or []
         steps = min(400, max(50, int(math.ceil(1.5 * len(ref))))) if args.adaptive_steps and ref else args.steps
-        cmd = [PYTHON, PARALLEL, "--task", task_path, "--out", str(gdir),
-               "--workers", str(args.workers), "--steps", str(steps), "--stagger", "3"]
-        try:
-            subprocess.run(cmd, stdin=subprocess.DEVNULL, timeout=args.timeout, check=False)
-        except subprocess.TimeoutExpired:
-            print("timeout", tid, flush=True)
-        task = json.loads(Path(task_path).read_text())
         rollouts = []
-        for w in range(args.workers):
-            ep = gdir / f"w{w}" / "episode.jsonl"
-            if not ep.exists():
-                continue
-            rows = [json.loads(l) for l in ep.read_text().splitlines() if l.strip()]
-            rollouts.append({"dir": str(gdir / f"w{w}"),
-                             **rollout_reward([r["world_xyz"] for r in rows], task)})
+        for wave in range(args.waves):
+            wdir = gdir / f"wave{wave}"
+            cmd = [PYTHON, PARALLEL, "--task", task_path, "--out", str(wdir),
+                   "--workers", str(args.workers), "--steps", str(steps), "--stagger", "3"]
+            try:
+                subprocess.run(cmd, stdin=subprocess.DEVNULL, timeout=args.timeout, check=False)
+            except subprocess.TimeoutExpired:
+                print("timeout", tid, wave, flush=True)
+            for w in range(args.workers):
+                ep = wdir / f"w{w}" / "episode.jsonl"
+                if not ep.exists():
+                    continue
+                rows = [json.loads(l) for l in ep.read_text().splitlines() if l.strip()]
+                rollouts.append({"dir": str(wdir / f"w{w}"),
+                                 **rollout_reward([r["world_xyz"] for r in rows], task)})
         if rollouts:
             group = {"group": len(groups), "task": task_path, "rollouts": rollouts}
             groups.append(group)
