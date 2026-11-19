@@ -132,3 +132,16 @@ Serve the adapter on `:8000`, then:
   --out /workspace/runs/eval_b0_eggrpo \
   --workers 2 --retries 2 --rollouts 1 --limit 244 --seed 7
 ```
+
+## Troubleshooting: `ue4` cannot execute venv Python
+
+If the venv interpreter lives under `/root/.local/...`, `ue4` may fail with
+`Permission denied`. Relocate the interpreter into `/workspace`:
+
+```bash
+cp -a /root/.local/share/uv/python/cpython-3.11.16-linux-x86_64-gnu /workspace/python311
+ln -sf /workspace/python311/bin/python3.11 /workspace/venv-uavflow/bin/python
+ln -sf /workspace/python311/bin/python3.11 /workspace/venv-uavflow/bin/python3
+sed -i 's#^home = .*#home = /workspace/python311/bin#' /workspace/venv-uavflow/pyvenv.cfg
+runuser -u ue4 -- /workspace/venv-uavflow/bin/python -c 'import gym, unrealcv; print("ok")'
+```
