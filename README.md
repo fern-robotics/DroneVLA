@@ -9,8 +9,8 @@ Instruction-conditioned UAV navigation with **OpenVLA-7B** and **π₀-FAST**: L
 | Data | 10% UAV-Flow-Sim subset built and validated (936 episodes, 765/90/81 splits, 81 OOD) |
 | π₀-FAST SFT | Official OpenPI path; 2-step smoke passed; token log-prob path verified on A40 |
 | OpenVLA SFT | Official repo; 1-step LoRA-SFT verified on A100 (484 MB adapter) |
-| GRPO / PPO | Tested RL core; model-specific adapters pending |
-| Evaluation | 30-episode AirSimNH suite; real OpenVLA-UAV live episode: success 1.0, 0 collisions, MP4 recorded |
+| GRPO / PPO | Native B0+GRPO pipeline implemented; B0+PPO pending |
+| Evaluation | Native UAV-Flow and AirSimNH suites; held-out 273-task split |
 | Rust crate | Surrogate protocol harness, not the thesis model |
 
 ## Quick start
@@ -59,3 +59,7 @@ cargo test
 - The released OpenVLA-UAV checkpoint is a third-party UAV-Flow baseline.
 - No official π₀-FAST UAV checkpoint exists; it must be trained here.
 - Live AirSim evaluation requires a separately running AirSimNH pod.
+
+## Reproducibility
+
+See [docs/B0_GRPO_REPRODUCTION.md](docs/B0_GRPO_REPRODUCTION.md) for the native B0+GRPO pipeline, data split, one-command runner, and artifacts.

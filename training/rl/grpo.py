@@ -101,6 +101,8 @@ def grpo_loss(
     response_mask: torch.Tensor,
     *,
     clip_range: float = 0.2,
+    clip_low: float | None = None,
+    clip_high: float | None = None,
     beta: float = 0.0,
     ref_logprobs: torch.Tensor | None = None,
 ) -> GrpoLoss:
@@ -121,8 +123,12 @@ def grpo_loss(
     Returns:
         :class:`GrpoLoss`; ``.loss`` is the scalar tensor to backpropagate.
     """
-    if clip_range < 0.0:
-        raise ValueError("clip_range must be non-negative")
+    if isinstance(clip_range, (tuple, list)):
+        clip_low, clip_high = float(clip_range[0]), float(clip_range[1])
+    low = float(clip_range if clip_low is None else clip_low)
+    high = float(clip_range if clip_high is None else clip_high)
+    if low < 0.0 or high < 0.0:
+        raise ValueError("clip range must be non-negative")
     if beta < 0.0:
         raise ValueError("beta must be non-negative")
 
@@ -134,7 +140,7 @@ def grpo_loss(
     log_ratio = torch.clamp(current - old, min=-20.0, max=20.0)
     ratio = torch.exp(log_ratio)
     unclipped = ratio * advantage
-    clipped = torch.clamp(ratio, 1.0 - clip_range, 1.0 + clip_range) * advantage
+    clipped = torch.clamp(ratio, 1.0 - low, 1.0 + high) * advantage
     surrogate = torch.minimum(unclipped, clipped)
 
     denominator = mask.sum().clamp_min(1.0)
@@ -145,7 +151,7 @@ def grpo_loss(
     else:
         kl = torch.zeros((), dtype=current.dtype, device=current.device)
 
-    outside = ((ratio - 1.0).abs() > clip_range).to(current.dtype)
+    outside = ((ratio < 1.0 - low) | (ratio > 1.0 + high)).to(current.dtype)
     return GrpoLoss(
         loss=policy_loss + beta * kl,
         policy_loss=policy_loss,
