@@ -20,6 +20,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--steps", type=int, default=10)
     ap.add_argument("--stagger", type=float, default=8.0)
+    ap.add_argument("--worker-timeout", type=float, default=300.0)
     args = ap.parse_args()
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     prefix = ["runuser", "-u", "ue4", "--", "env", "DISPLAY=:99", "UnrealEnv=/workspace/UnrealEnv"]
@@ -38,7 +39,12 @@ def main() -> None:
         time.sleep(args.stagger)
     results = []
     for i, p, log in procs:
-        code = p.wait()
+        try:
+            code = p.wait(timeout=args.worker_timeout)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            subprocess.run(["pkill", "-f", f"uavflow_native_policy.py.*{out / f'w{i}'}"], check=False)
+            code = -9
         log.close()
         results.append({"worker": i, "exit": code,
                         "episode": str(out / f"w{i}" / "episode.jsonl")})
