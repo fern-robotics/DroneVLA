@@ -4,9 +4,9 @@ train_tasks: /workspace/uavflow_train_tasks
 sample_tasks: 300
 sample_stratified: true
 seed: 7
-group_size: 4
+group_size: 8
 expert_rollouts: 1
-engines: 2
+engines: 4
 collection_waves: 2
 max_steps: adaptive
 max_steps_formula: "min(400, max(50, ceil(1.5 * len(reference_path_raw))))"
