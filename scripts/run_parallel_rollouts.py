@@ -20,7 +20,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--steps", type=int, default=10)
     ap.add_argument("--stagger", type=float, default=8.0)
-    ap.add_argument("--worker-timeout", type=float, default=300.0)
+    ap.add_argument("--worker-timeout", type=float, default=90.0)
     args = ap.parse_args()
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     prefix = ["runuser", "-u", "ue4", "--", "env", "DISPLAY=:99", "UnrealEnv=/workspace/UnrealEnv"]
