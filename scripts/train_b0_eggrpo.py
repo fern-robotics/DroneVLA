@@ -71,6 +71,7 @@ def main() -> None:
     ap.add_argument("--out", default="/workspace/runs/b0_grpo")
     ap.add_argument("--max-groups", type=int, default=1)
     ap.add_argument("--save-every", type=int, default=0)
+    ap.add_argument("--recompute-old", action="store_true")
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--beta", type=float, default=0.01)
     ap.add_argument("--clip-low", type=float, default=0.20)
@@ -144,7 +145,8 @@ def main() -> None:
                 logits = model(**kwargs).logits[0]
                 selected = logits[ids.numel() - 1:ids.numel() - 1 + toks.numel()]
                 cur = torch.log_softmax(selected, dim=-1).gather(-1, toks[:, None]).squeeze(-1).unsqueeze(0)
-                old_t = torch.tensor(old, dtype=torch.float32, device="cuda").unsqueeze(0)
+                old_t = (cur.detach() if args.recompute_old else
+                         torch.tensor(old, dtype=torch.float32, device="cuda").unsqueeze(0))
                 mask = torch.ones_like(cur)
                 loss = grpo_loss(cur, old_t, torch.tensor([advantage], device="cuda"),
                                  mask, clip_range=0.2,
