@@ -18,6 +18,52 @@ def action_prompt(instruction: str, state: list[float]) -> str:
     return f"In: Current State: {vals}, What action should the uav take to {instruction}?\nOut:"
 
 
+
+
+def expert_bc_loss(model, processor, expert_dir: Path, task: dict, steps: int, unnorm_key: str = "sim"):
+    """Cross-entropy BC on cached expert frames/actions (4-D delta action tokens)."""
+    import numpy as np
+    ep = json.loads((expert_dir / "expert.json").read_text())
+    prep = ep.get("preprocessed_logs") or []
+    frames = sorted(expert_dir.glob("*.jpg"))
+    if not prep or not frames:
+        return None
+    stats = model.config.norm_stats[unnorm_key]["action"]
+    q01 = np.asarray(stats["q01"], dtype=np.float32)[:4]
+    q99 = np.asarray(stats["q99"], dtype=np.float32)[:4]
+    bins = (model.bin_centers if hasattr(model, "bin_centers") else None)
+    if bins is None:
+        import numpy as _np
+        bins = (_np.linspace(-1, 1, 257)[:-1] + _np.linspace(-1, 1, 257)[1:]) / 2.0
+    vocab = int(model.vocab_size if hasattr(model, "vocab_size") else model.config.text_config.vocab_size)
+    state = [0.0, 0.0, 0.0, 0.0]
+    losses = []
+    n = min(len(frames), len(prep), steps)
+    for i in range(n):
+        a = np.asarray(prep[i][:4], dtype=np.float32)
+        norm = 2.0 * (a - q01) / np.maximum(q99 - q01, 1e-6) - 1.0
+        disc = np.digitize(norm, np.linspace(-1, 1, 257))
+        toks = torch.tensor([vocab - int(d) for d in disc], dtype=torch.long, device="cuda")
+        img = Image.open(frames[i]).convert("RGB").resize((224, 224))
+        prompt = action_prompt(task["instruction"], state)
+        inp = processor(prompt, img)
+        ids = inp["input_ids"][0] if inp["input_ids"].ndim == 2 else inp["input_ids"]
+        ids = ids.to("cuda")
+        full = torch.cat([ids, toks[:-1]]).unsqueeze(0).to("cuda")
+        kwargs = {"input_ids": full}
+        if inp.get("pixel_values") is not None:
+            kwargs["pixel_values"] = inp["pixel_values"].to("cuda", dtype=torch.bfloat16)
+        logits = model(**kwargs).logits[0]
+        selected = logits[ids.numel() - 1: ids.numel() - 1 + toks.numel()]
+        loss = torch.nn.functional.cross_entropy(selected, toks)
+        losses.append(loss)
+        state[0] += float(a[0]); state[1] += float(a[1]); state[2] += float(a[2])
+        state[3] += float(np.degrees(a[3]))
+    if not losses:
+        return None
+    return torch.stack(losses).mean()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--groups", required=True)
@@ -32,6 +78,8 @@ def main() -> None:
     ap.add_argument("--expert-reward", type=float, default=2.0)
     ap.add_argument("--qlora", action="store_true", default=True)
     ap.add_argument("--no-qlora", dest="qlora", action="store_false")
+    ap.add_argument("--expert-bc-weight", type=float, default=0.0)
+    ap.add_argument("--expert-bc-steps", type=int, default=4)
     args = ap.parse_args()
     groups = json.load(open(args.groups))[: args.max_groups]
     processor = AutoProcessor.from_pretrained(args.base, trust_remote_code=True)
@@ -86,7 +134,8 @@ def main() -> None:
                 full = torch.cat([ids, toks[:-1]]).unsqueeze(0).to("cuda")
                 kwargs = {"input_ids": full}
                 if inputs.get("pixel_values") is not None:
-                    kwargs["pixel_values"] = inputs["pixel_values"].to("cuda", dtype=torch.bfloat16)
+                    kwargs["pixel_values"] = inputs["pixel_values"].to(
+                        "cuda", dtype=torch.float32 if args.qlora else torch.bfloat16)
                 logits = model(**kwargs).logits[0]
                 selected = logits[ids.numel() - 1:ids.numel() - 1 + toks.numel()]
                 cur = torch.log_softmax(selected, dim=-1).gather(-1, toks[:, None]).squeeze(-1).unsqueeze(0)
@@ -96,9 +145,15 @@ def main() -> None:
                                  mask, clip_range=0.2,
                                  clip_low=args.clip_low, clip_high=args.clip_high,
                                  beta=args.beta).loss
-                loss_sum = loss_sum + loss
-                losses.append(loss)
-        (loss_sum / max(1, len(losses))).backward()
+                loss_sum = loss_sum + loss.detach()
+                (loss / max(1, len(rows))).backward()
+                losses.append(loss.detach())
+        if args.expert_bc_weight > 0:
+            expert_dir = Path(args.expert_cache) / Path(group["task"]).stem
+            bc = expert_bc_loss(model, processor, expert_dir, task, args.expert_bc_steps)
+            if bc is not None:
+                (args.expert_bc_weight * bc).backward()
+                print("bc_loss", float(bc.detach()), flush=True)
         grad_norm = torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
         opt.step()
         updates += 1
