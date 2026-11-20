@@ -1,0 +1,50 @@
+name: b0_eggrpo_150
+base: OpenVLA-UAV B0
+training_pool: 10109
+sampled_tasks: 150
+sampling: random split of manifest_300; stratification not verified
+policy_rollouts_per_task: 4
+expert_rollouts_per_task: 1
+group_composition: 4 policy + 1 cached expert
+policy_rollouts_total: 600
+expert_rollouts_total: 150
+adaptive_horizon: min(400, max(50, ceil(1.5 * len(reference_path_raw))))
+collection:
+  pods: 2
+  gpu: A40
+  workers_per_pod: 4
+  worker_timeout_s: 300
+  retries: 2
+  tasks_per_pod: 75
+  outputs:
+    - /workspace/runs/b0_queue_a
+    - /workspace/runs/b0_queue_b
+quantization:
+  load_in_4bit: true
+  quant_type: nf4
+  double_quant: true
+  compute_dtype: bf16
+lora:
+  rank: 32
+  alpha: 16
+  dropout: 0.0
+  targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+grpo:
+  lr: 1.0e-5
+  clip_low: 0.20
+  clip_high: 0.28
+  kl_beta: 0.0
+  updates: 150
+  optimizer: adamw
+  gradient_checkpointing: true
+reward:
+  progress: 2.0
+  cross_track: -0.5
+  terminal: -1.0
+eval:
+  tasks: 244
+  workers: 2
+  retries: 2
+  adaptive_horizon: true
+  success_threshold_m: 2.0
+  metric: position_ndtw
