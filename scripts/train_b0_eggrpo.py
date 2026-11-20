@@ -99,8 +99,13 @@ def main() -> None:
     model.gradient_checkpointing_enable()
     if hasattr(model, "enable_input_require_grads"):
         model.enable_input_require_grads()
+    for p in model.parameters():
+        if p.is_floating_point():
+            p.data = p.data.to(torch.bfloat16)
     cfg = LoraConfig(r=32, lora_alpha=16, lora_dropout=0.0, bias="none",
-                     target_modules="all-linear", task_type="CAUSAL_LM")
+                     target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                                     "gate_proj", "up_proj", "down_proj"],
+                     task_type="CAUSAL_LM")
     model = get_peft_model(model, cfg)
     model.train()
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr)
@@ -135,8 +140,7 @@ def main() -> None:
                 full = torch.cat([ids, toks[:-1]]).unsqueeze(0).to("cuda")
                 kwargs = {"input_ids": full}
                 if inputs.get("pixel_values") is not None:
-                    kwargs["pixel_values"] = inputs["pixel_values"].to(
-                        "cuda", dtype=torch.float32 if args.qlora else torch.bfloat16)
+                    kwargs["pixel_values"] = inputs["pixel_values"].to("cuda", dtype=torch.bfloat16)
                 logits = model(**kwargs).logits[0]
                 selected = logits[ids.numel() - 1:ids.numel() - 1 + toks.numel()]
                 cur = torch.log_softmax(selected, dim=-1).gather(-1, toks[:, None]).squeeze(-1).unsqueeze(0)
