@@ -23,14 +23,25 @@ def run_job(args, task_path, task, k, out):
     log = (d / "runner.log").open("w")
     p = subprocess.Popen(cmd, cwd=args.root, stdin=subprocess.DEVNULL,
                          stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    ep = d / "episode.jsonl"
+    deadline = time.time() + min(args.timeout, max(300, steps * 6))
+    stable_since = None
     try:
-        p.wait(timeout=args.timeout)
-    except subprocess.TimeoutExpired:
-        os.killpg(os.getpgid(p.pid), signal.SIGKILL)
-        print("timeout", Path(task_path).stem, k, flush=True)
+        while time.time() < deadline:
+            if ep.exists():
+                now = time.time(); mt = ep.stat().st_mtime
+                if now - mt > 2.0:
+                    if stable_since is None: stable_since = now
+                    if now - stable_since >= 1.0: break
+                else:
+                    stable_since = None
+            if p.poll() is not None: break
+            time.sleep(1)
+        if p.poll() is None:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            print("reaped", Path(task_path).stem, k, flush=True)
     finally:
         log.close()
-    ep = d / "episode.jsonl"
     if not ep.exists():
         return None
     rows = [json.loads(l) for l in ep.read_text().splitlines() if l.strip()]
