@@ -70,6 +70,7 @@ def main() -> None:
     ap.add_argument("--base", default="/workspace/openvla-uav")
     ap.add_argument("--out", default="/workspace/runs/b0_grpo")
     ap.add_argument("--max-groups", type=int, default=1)
+    ap.add_argument("--save-every", type=int, default=0)
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--beta", type=float, default=0.01)
     ap.add_argument("--clip-low", type=float, default=0.20)
@@ -160,6 +161,11 @@ def main() -> None:
         mean_loss = float(loss_sum.detach()) / max(1, len(losses))
         total_loss += mean_loss
         print("update", updates, "loss", mean_loss, "grad_norm", float(grad_norm), "rows", len(losses), flush=True)
+        if args.save_every and updates % args.save_every == 0:
+            ckpt = Path(args.out) / f"checkpoint-{updates}"
+            ckpt.mkdir(parents=True, exist_ok=True)
+            model.save_pretrained(str(ckpt))
+            print("checkpoint", str(ckpt), flush=True)
     Path(args.out).mkdir(parents=True, exist_ok=True)
     model.save_pretrained(args.out)
     print(json.dumps({"updates": updates, "mean_loss": total_loss / max(1, updates)}))
