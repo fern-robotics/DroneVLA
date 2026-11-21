@@ -72,6 +72,7 @@ def main() -> None:
     ap.add_argument("--max-groups", type=int, default=1)
     ap.add_argument("--save-every", type=int, default=0)
     ap.add_argument("--recompute-old", action="store_true")
+    ap.add_argument("--init-adapter", default="")
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--beta", type=float, default=0.01)
     ap.add_argument("--clip-low", type=float, default=0.20)
@@ -107,7 +108,11 @@ def main() -> None:
                      target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
                                      "gate_proj", "up_proj", "down_proj"],
                      task_type="CAUSAL_LM")
-    model = get_peft_model(model, cfg)
+    if args.init_adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, args.init_adapter, is_trainable=True)
+    else:
+        model = get_peft_model(model, cfg)
     model.train()
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr)
     total_loss = 0.0

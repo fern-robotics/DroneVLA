@@ -15,7 +15,7 @@ def run_job(args, task_path, task, k, out):
     subprocess.run(["chmod", "-R", "a+rwX", str(d)], check=False)
     ref = task.get("reference_path_raw") or []
     steps = min(400, max(50, math.ceil(1.5 * len(ref)))) if ref else 20
-    cmd = ["runuser", "-u", "ue4", "--", "env", "DISPLAY=:99",
+    cmd = ["env", "DISPLAY=:99",
            f"UnrealEnv={args.unreal_env}", args.python, args.runner,
            "--task", task_path, "--out", str(d), "--max-steps", str(steps),
            "--image-cam", "0", "--action-mode", "absolute", "--state-format", "4",
