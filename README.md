@@ -48,7 +48,7 @@ cargo test
 
 ## Rust control plane
 
-`dronevlctl` provides evaluation metrics, paired reports, process supervision, the HTTP policy gateway, UnrealCV/engine lifecycle, expert-cache materialization, and the experiment 1–8 plan. See [docs/RUST_CONTROL_PLANE.md](docs/RUST_CONTROL_PLANE.md).
+`dronevlctl` provides evaluation metrics, paired reports, process supervision, the HTTP policy gateway, UnrealCV/engine lifecycle, expert-cache materialization, and the experiment 1–8 plan. See [docs/RUST_CONTROL_PLANE.md](docs/RUST_CONTROL_PLANE.md) and [docs/OPS_PIPELINE.md](docs/OPS_PIPELINE.md).
 
 ```bash
 cargo test
