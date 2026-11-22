@@ -7,6 +7,12 @@ scripts/ops/run_ablation_queue.sh
   experiments 3–6: six offline arms + fixed-50 evals
   marker: ABLATION_QUEUE_DONE
 
+watch_bc244.sh
+  waits for ABLATION_QUEUE_DONE
+  runs full-244 evals for ab_bc0 and ab_bc05
+  marker: BC244_DONE or BC244_FAIL
+  then starts data300
+
 watch_data300.sh
   waits for ABLATION_QUEUE_DONE
   collects 150 extra offline groups
@@ -43,12 +49,14 @@ Python/model/simulator commands. It checks:
 python3 scripts/smoke_experiment_pipeline.py
 ```
 
-The mock caught a real scheduler bug:
+The mock caught two real shell bugs:
 
 ```bash
 # broken under set -u
 local exp=$1 id=$2 adapter=$3 eout=$DATA/.../$id
+local id=$1 adapter=$2 eout=$DATA/.../${id}_244
 ```
 
-`$id` was expanded before assignment, aborting every schedule. The fixed form
-uses separate `local eout=...` lines.
+`$id` was expanded before assignment in both the schedule and BC-244 scripts,
+aborting each as soon as it started. Both now use separate `local eout=...`
+lines.
