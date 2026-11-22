@@ -90,10 +90,17 @@ def smoke_proxy():
             try:
                 socket.create_connection(("127.0.0.1", bind_port), timeout=0.2).close(); break
             except OSError: time.sleep(0.1)
-        req = Request(f"http://127.0.0.1:{bind_port}/predict", data=b'{"image":"x"}',
+        # Valid 1x1 PNG; the Rust proxy must decode and resize it to 224x224.
+        tiny_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPgEpEDAABoAD1UCKP3AAAAAElFTkSuQmCC"
+        body_payload = json.dumps({"image": tiny_png, "proprio": [0,0,0,0,0,0], "progress": 0.0, "instr": "x"}).encode()
+        req = Request(f"http://127.0.0.1:{bind_port}/predict", data=body_payload,
                       headers={"Content-Type": "application/json"}, method="POST")
-        body = json.loads(urlopen(req, timeout=5).read())
-        assert body["actions"] == [[1, 2, 3, 4]], body
+        try:
+            body = json.loads(urlopen(req, timeout=5).read())
+        except Exception as e:
+            detail = getattr(e, "read", lambda: b"")()
+            raise RuntimeError(f"proxy error: {e} body={detail!r}")
+        assert body["action"] == [[1, 2, 3, 4]], body
     finally:
         p.terminate(); p.wait(timeout=5); up.shutdown()
     return body
@@ -102,7 +109,15 @@ def smoke_proxy():
 def smoke_unrealcv():
     srv = socket.socket(); srv.bind(("127.0.0.1", 0)); srv.listen(1); port = srv.getsockname()[1]
     def serve():
-        c, _ = srv.accept(); line = c.recv(4096); c.sendall(b"10.0 20.0 30.0\n"); c.close()
+        import struct
+        c, _ = srv.accept()
+        header = c.recv(8)
+        magic, n = struct.unpack("<II", header)
+        assert magic == 0x9E2B83C1, hex(magic)
+        c.recv(n)
+        payload = b"10.0 20.0 30.0\n"
+        c.sendall(struct.pack("<II", 0x9E2B83C1, len(payload)) + payload)
+        c.close()
     threading.Thread(target=serve, daemon=True).start()
     r = run("unrealcv-probe", "--addr", f"127.0.0.1:{port}", "--command", "vget /camera/0/lit")
     assert "10.0 20.0 30.0" in r.stdout, r.stdout

@@ -42,8 +42,8 @@ dronevlctl unrealcv-probe --addr 127.0.0.1:9000
 | `src/eval.rs` | load result JSON, success/NDTW, horizon bins, McNemar, paired bootstrap |
 | `src/reward.rs` | reference-trajectory rollout reward (progress, cross-track, terminal) |
 | `src/orchestrator.rs` | single-writer lock, retries, timeout, process-group kill, server readiness |
-| `src/proxy.rs` | dependency-free HTTP gateway and `/reset` |
-| `src/unrealcv.rs` | UnrealCV text client + engine supervisor |
+| `src/proxy.rs` | Python-compatible HTTP gateway: base64 image decode, 224×224 resize, payload translation, `/reset` |
+| `src/unrealcv.rs` | UnrealCV framed client (text + raw PNG payloads) + engine supervisor |
 | `src/cache.rs` | content-addressed expert/dataset cache |
 | `src/experiment_plan.rs` | experiments 1–8 as runnable specifications |
 
@@ -67,6 +67,15 @@ cargo test
 python3 scripts/smoke_rust_control_plane.py
 ```
 
-The smoke test uses mock HTTP, mock UnrealCV, synthetic eval JSONs, a temp
-expert cache, and a timeout command. It requires no GPU, Unreal, or model
-weights.
+The smoke test uses mock HTTP, mock UnrealCV (framed protocol), a real 1×1 PNG
+resized to 224×224, synthetic eval JSONs, a temp expert cache, and a timeout
+command. It requires no GPU, Unreal, or model weights.
+
+## Compatibility notes
+
+- The proxy matches `policy_proxy.py`: `image` → `image_png_b64`, and
+  `actions/tokens/logprobs` → `action/tokens/logprobs/done`.
+- PIL bicubic is approximated with `CatmullRom`; images already 224×224 are
+  passed through unchanged, as in Python.
+- UnrealCV request framing is `<magic 0x9E2B83C1><len><id>:<command>` and image
+  responses are raw PNG bytes, matching the Python `unrealcv` package.
