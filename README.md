@@ -46,6 +46,15 @@ cargo test
 - `scripts/eval/` — 30-episode manifest, predicates, mock/AirSim evaluators.
 - `src/` — Rust surrogate simulator, policies, analysis.
 
+## Rust control plane
+
+`dronevlctl` provides evaluation metrics, paired reports, process supervision, the HTTP policy gateway, UnrealCV/engine lifecycle, expert-cache materialization, and the experiment 1–8 plan. See [docs/RUST_CONTROL_PLANE.md](docs/RUST_CONTROL_PLANE.md).
+
+```bash
+cargo test
+python3 scripts/smoke_rust_control_plane.py
+```
+
 ## Documentation
 
 - [EXPERIMENT.md](EXPERIMENT.md) — conditions, data, metrics, budget.

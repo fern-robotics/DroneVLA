@@ -9,21 +9,28 @@
 //! stands in for the VLA. Perception, intent planning, safety gate, simulator,
 //! and intent evaluator are fixed across conditions and live in Rust.
 
-pub mod geom;
 pub mod action;
-pub mod scene;
+pub mod analysis;
+pub mod cache;
+pub mod eval;
+pub mod experiment;
+pub mod experiment_plan;
+pub mod geom;
 pub mod instruction;
-pub mod task;
-pub mod tracker;
+pub mod oracle;
+pub mod orchestrator;
 pub mod planner;
 pub mod policy;
-pub mod sim;
-pub mod safety;
+pub mod proxy;
+pub mod reward;
 pub mod runner;
-pub mod oracle;
-pub mod uavflow;
+pub mod safety;
+pub mod scene;
+pub mod sim;
+pub mod task;
+pub mod tracker;
 pub mod train;
-pub mod analysis;
-pub mod experiment;
+pub mod uavflow;
+pub mod unrealcv;
 
 pub const SCHEMA_VERSION: &str = "2.0";
