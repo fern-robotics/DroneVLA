@@ -57,7 +57,7 @@ The planner emits both `experiment_plan.csv` and `experiment_plan.json`:
 - experiment 4: expert reward anchor on/off
 - experiment 5: KL 0.0 / 0.01
 - experiment 6: LR 5e-6 / 1e-5 / 2e-5
-- experiment 7: offline/online 150 vs 300 groups
+- experiment 7: offline/online 150 vs 300 groups (`MANIFEST` must contain at least 300 tasks for the online-300 arm)
 - experiment 8: 5×30 / 15×10 / 30×5 online schedules
 
 ## Smoke test

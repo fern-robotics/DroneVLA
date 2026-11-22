@@ -37,7 +37,7 @@ fn train_cmd(bc: &str, anchor: &str, beta: &str, lr: &str) -> String {
 }
 
 fn online_cmd(rounds: &str, per: &str) -> String {
-    format!("env TAG={{tag}} N_ROUNDS={rounds} PER={per} bash scripts/run_online_eggrpo.sh")
+    format!("env TAG={{tag}} MANIFEST={{manifest}} N_ROUNDS={rounds} PER={per} bash scripts/run_online_eggrpo.sh")
 }
 
 pub fn plan() -> Vec<PlannedRun> {
@@ -189,7 +189,7 @@ pub fn plan() -> Vec<PlannedRun> {
         (
             "7-DS-OFF300",
             "300",
-            train_cmd("0.2", "2.0", "0.0", "1e-5"),
+            train_cmd("0.2", "2.0", "0.0", "1e-5").replace("--max-groups 150", "--max-groups 300"),
             5.0,
         ),
         ("7-DS-ON150", "150", online_cmd("15", "10"), 6.75),
@@ -284,6 +284,8 @@ mod tests {
         assert!(p.iter().any(|x| x.id == "3-BC-0.2"));
         assert!(p.iter().any(|x| x.id == "6-LR-2e-5"));
         assert!(p.iter().any(|x| x.id == "8-ON-30x5"));
+        assert!(p.iter().find(|x| x.id == "7-DS-OFF300").unwrap().command.contains("--max-groups 300"));
+        assert!(p.iter().find(|x| x.id == "7-DS-ON300").unwrap().command.contains("MANIFEST="));
         assert!(p.iter().all(|x| !x.command.is_empty()));
     }
 }
