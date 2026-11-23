@@ -7,10 +7,10 @@ scripts/ops/run_ablation_queue.sh
   experiments 3–6: six offline arms + fixed-50 evals
   marker: ABLATION_QUEUE_DONE
 
-watch_bc244.sh
+watch_full244.sh
   waits for ABLATION_QUEUE_DONE
-  runs full-244 evals for ab_bc0 and ab_bc05
-  marker: BC244_DONE or BC244_FAIL
+  runs full-244 evals for all six ablation arms
+  marker: FULL244_ABLATION_DONE or FULL244_ABLATION_FAIL
   then starts data300
 
 watch_data300.sh

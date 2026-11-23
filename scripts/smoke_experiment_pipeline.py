@@ -142,9 +142,9 @@ def main():
         if len(rows) < 7:
             print("ABLATION_LOG:\n"+log[-5000:])
         assert len(rows)>=7, rows
-        bclog=run_until("run_bc244_queue.sh", root, "BC244_DONE", data/"bc244_queue.log", 180)
-        assert "BC244_DONE" in bclog and "BC244_FAIL" not in bclog
-        assert len((data/"runs/bc244_results.csv").read_text().splitlines())>=3
+        fulllog=run_until("run_full244_ablation_queue.sh", root, "FULL244_ABLATION_DONE", data/"full244_ablation_queue.log", 180)
+        assert "FULL244_ABLATION_DONE" in fulllog and "FULL244_ABLATION_FAIL" not in fulllog
+        assert len((data/"runs/full244_ablation_results.csv").read_text().splitlines())>=7
         dlog=run_until("run_data300_queue.sh", root, "DATA300_DONE", data/"data300_queue.log", 180)
         assert "DATA300_DONE" in dlog and "DATA300_FAIL" not in dlog
         assert len(json.load(open(data/"groups_offline_300.json")))>=300
