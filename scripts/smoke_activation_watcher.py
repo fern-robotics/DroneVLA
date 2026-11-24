@@ -26,7 +26,7 @@ def main():
         text=(REPO/"scripts/ops/activate_nvme_pipeline.sh").read_text()
         text=text.replace("/mnt/data/skripsi-ryan-adidaru",str(src))
         text=text.replace("/home/digilab/ws/skripsi-ryan-adidaru",str(src))
-text=text.replace("/home/digilab/dronevl_nvme",str(nv))
+        text=text.replace("/home/digilab/dronevl_nvme",str(nv))
         text=text.replace("/home/digilab/dronevl_migrate.log",str(t/"migrate.log"))
         text=text.replace("/home/digilab/dronevl_activate.log",str(t/"activate.log"))
         text=text.replace("/home/digilab/ws/skripsi-ryan-adidaru/watch_schedules.sh",str(src/"watch_schedules.sh"))
