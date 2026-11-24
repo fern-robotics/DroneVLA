@@ -40,8 +40,6 @@ def main():
         for _ in range(100):
             if (t/"fake_data.log").exists() and (t/"fake_sched.log").exists(): break
             time.sleep(0.1)
-        print("DEBUG data300", (src/"data300_launch.log").read_text() if (src/"data300_launch.log").exists() else "MISSING")
-        print("DEBUG schedules", (src/"schedules_launch.log").read_text() if (src/"schedules_launch.log").exists() else "MISSING")
         assert (t/"fake_start.log").exists(), "fake data300 never started"
         assert "FAKE_DATA300" in (t/"fake_data.log").read_text()
         assert "FAKE_SCHEDULES" in (t/"fake_sched.log").read_text()
