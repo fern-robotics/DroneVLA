@@ -30,6 +30,7 @@ for f in "$SRC"/groups_*.json "$SRC"/manifest_*.json; do
   ln -s "$NV/$b" "$SRC/$b" 2>/dev/null || true
 done
 echo ACTIVE_NVME | tee -a "$LOG"
-nohup bash "$SRC/run_data300_queue.sh" >> "$SRC/data300_launch.log" 2>&1 &
-nohup bash "$SRC/watch_schedules.sh" >> "$SRC/schedules_launch.log" 2>&1 &
+WS=/home/digilab/ws/skripsi-ryan-adidaru
+nohup bash "$WS/run_data300_queue.sh" >> "$SRC/data300_launch.log" 2>&1 &
+nohup bash "$WS/watch_schedules.sh" >> "$SRC/schedules_launch.log" 2>&1 &
 echo DATA300_STARTED | tee -a "$LOG"
