@@ -15,6 +15,11 @@ FAKE = r'''#!/usr/bin/env python3
 import json, os, socket, sys, time
 from pathlib import Path
 
+def rec(x):
+    p=os.environ.get('PHASE_LOG')
+    if p:
+        with open(p,'a') as f: f.write(x+'\n')
+
 def arg(name, default=None):
     a=sys.argv
     return a[a.index(name)+1] if name in a else default
@@ -22,6 +27,7 @@ def arg(name, default=None):
 def main():
     script=Path(sys.argv[1]).name if len(sys.argv)>1 else ""
     if script == "train_b0_eggrpo.py":
+        rec("train "+str(arg("--out")))
         out=Path(arg("--out")); out.mkdir(parents=True, exist_ok=True)
         (out/"adapter_model.safetensors").write_bytes(b"adapter")
         (out/"checkpoint-1").mkdir(exist_ok=True)
@@ -38,6 +44,7 @@ def main():
         while True:
             c,_=s.accept(); c.close()
     elif script == "eval_uavflow_test_5090.py":
+        rec("eval "+str(arg("--out")))
         out=Path(arg("--out")); out.mkdir(parents=True, exist_ok=True)
         n=int(arg("--limit", "50"))
         res=out/"results"; res.mkdir(exist_ok=True)
@@ -51,6 +58,7 @@ def main():
         (out/"summary.json").write_text(json.dumps({"tasks":n,"success":rate,"success_rate":rate,
             "pass_at_k":rate,"k":1,"mean_ndtW":0.5,"mean_final_target_m":2.0}))
     elif script == "collect_uavflow_queue.py":
+        rec("collect "+str(arg("--out")))
         manifest=json.load(open(arg("--manifest")))["tasks"]; out=Path(arg("--out")); out.mkdir(parents=True, exist_ok=True)
         groups=[]
         for i,t in enumerate(manifest):
@@ -135,7 +143,8 @@ def run_until(script, root, marker, logpath, timeout=120):
 
 def main():
     with tempfile.TemporaryDirectory(prefix="dronevl-pipeline-") as td:
-        sandbox=Path(td); root,data=prep(sandbox); copy_ops(root)
+        sandbox=Path(td)
+        os.environ["PHASE_LOG"]=str(sandbox/"phase.log"); root,data=prep(sandbox); copy_ops(root)
         log=run_until("run_ablation_queue.sh", root, "ABLATION_QUEUE_DONE", data/"ablation_queue.log", 180)
         assert "ABLATION_QUEUE_DONE" in log
         rows=(data/"runs/ablation_results.csv").read_text().strip().splitlines()
@@ -147,6 +156,17 @@ def main():
         assert len((data/"runs/full244_ablation_results.csv").read_text().splitlines())>=7
         dlog=run_until("run_data300_queue.sh", root, "DATA300_DONE", data/"data300_queue.log", 180)
         assert "DATA300_DONE" in dlog and "DATA300_FAIL" not in dlog
+        phases=[x.split()[0]+":"+x.split(" ",1)[1] if " " in x else x for x in (sandbox/"phase.log").read_text().splitlines() if x.strip()]
+        # Order: offline collect, offline train, online collect, online train, offline eval, online eval.
+        wanted=["collect","train","collect","train","eval","eval"]
+        got=[x.split(":",1)[0] for x in phases]
+        assert got[-6:]==wanted, got
+        # Resume pass must not retrain completed arms.
+        before=sum(1 for x in got if x.startswith("train"))
+        run_until("run_data300_queue.sh", root, "DATA300_DONE", data/"data300_queue.log", 180)
+        after_phases=(sandbox/"phase.log").read_text().splitlines()
+        after=sum(1 for x in after_phases if x.startswith("train "))
+        assert after==before, (before,after,'retrained on resume')
         assert len(json.load(open(data/"groups_offline_300.json")))>=300
         assert len(json.load(open(data/"groups_online_300.json")))>=300
         slog=run_until("run_schedules_queue.sh", root, "SCHEDULES_DONE", data/"schedules_queue.log", 180)
